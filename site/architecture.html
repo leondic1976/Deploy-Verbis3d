@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Architecture · Verbis3D</title>
+    <link rel="stylesheet" href="./styles/main.css" />
+  </head>
+  <body data-page="architecture">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="./index.html">Verbis<span>3D</span></a
+        ><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+          Menu
+        </button>
+        <nav class="site-nav" id="site-nav" aria-label="Primary">
+          <a data-page="home" href="./index.html">Home</a
+          ><a data-page="docs" href="./docs.html">Docs</a
+          ><a data-page="examples" href="./examples.html">Examples</a
+          ><a data-page="playground" href="./playground.html">Playground</a
+          ><a data-page="architecture" href="./architecture.html">Architecture</a
+          ><a data-page="roadmap" href="./roadmap.html">Roadmap</a><a href="./api/index.html">API</a
+          ><a href="https://github.com/leondic1976/Deploy-Verbis3d">GitHub</a>
+        </nav>
+      </div>
+    </header>
+    <main id="main" class="reading section">
+      <p class="eyebrow">Architecture</p>
+      <h1>Boundaries are part of the product.</h1>
+      <p class="lead">
+        The core owns scene behavior. Render backends consume commands. AI providers only produce
+        untrusted data.
+      </p>
+      <h2>Rendering path</h2>
+      <div class="architecture-flow" aria-label="Rendering architecture">
+        <div>Application / public API</div>
+        <div>Engine and scene graph</div>
+        <div>Renderer abstraction and render list</div>
+        <div>WebGL2 programs, VAOs, buffers and state</div>
+        <div>GPU</div>
+      </div>
+      <h2>AI command path</h2>
+      <div class="architecture-flow" aria-label="AI command architecture">
+        <div>Natural language</div>
+        <div>Provider adapter</div>
+        <div>Structured command</div>
+        <div>Runtime validation and permission checks</div>
+        <div>Command bus → public object APIs</div>
+      </div>
+      <p><a href="./docs.html#commands">Read command safety documentation</a></p>
+    </main>
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span>Verbis3D architecture</span
+        ><a href="https://github.com/leondic1976/Deploy-Verbis3d/tree/main/docs"
+          >Architecture records</a
+        >
+      </div>
+    </footer>
+    <script type="module" src="./scripts/site.js"></script>
+  </body>
+</html>

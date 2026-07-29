@@ -1,6 +1,10 @@
 node_modules/
 dist/
 coverage/
+site-dist/
+site/api/
+test-results/
+playwright-report/
 .vscode/
 .DS_Store
 *.log

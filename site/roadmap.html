@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Roadmap · Verbis3D</title>
+    <link rel="stylesheet" href="./styles/main.css" />
+  </head>
+  <body data-page="roadmap">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="./index.html">Verbis<span>3D</span></a
+        ><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+          Menu
+        </button>
+        <nav class="site-nav" id="site-nav" aria-label="Primary">
+          <a data-page="home" href="./index.html">Home</a
+          ><a data-page="docs" href="./docs.html">Docs</a
+          ><a data-page="examples" href="./examples.html">Examples</a
+          ><a data-page="playground" href="./playground.html">Playground</a
+          ><a data-page="architecture" href="./architecture.html">Architecture</a
+          ><a data-page="roadmap" href="./roadmap.html">Roadmap</a><a href="./api/index.html">API</a
+          ><a href="https://github.com/leondic1976/Deploy-Verbis3d">GitHub</a>
+        </nav>
+      </div>
+    </header>
+    <main id="main" class="reading section">
+      <p class="eyebrow">Roadmap</p>
+      <h1>From readable alpha to durable engine.</h1>
+      <section>
+        <h2>0.1 alpha · current</h2>
+        <p>
+          Math core, scene graph, cameras, basic primitives/material, WebGL2 indexed rendering,
+          animation/command foundations, offline rules, JSON scene round-trip and documentation
+          site.
+        </p>
+      </section>
+      <section>
+        <h2>0.2 · robustness</h2>
+        <p>
+          GPU cache invalidation, texture sampling, render sorting, richer materials, browser matrix
+          and performance budgets.
+        </p>
+      </section>
+      <section>
+        <h2>0.3 · asset pipeline</h2>
+        <p>glTF subset, async dependency graphs, worker decoding and explicit asset ownership.</p>
+      </section>
+      <section>
+        <h2>Later</h2>
+        <p>
+          WebGPU backend, skeletal animation, editor tooling and provider-specific AI integrations.
+          These are planned, not implemented.
+        </p>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span>Roadmap reflects implementation status</span><a href="./index.html">Current stage</a>
+      </div>
+    </footer>
+    <script type="module" src="./scripts/site.js"></script>
+  </body>
+</html>

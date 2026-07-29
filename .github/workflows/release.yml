@@ -1,0 +1,29 @@
+name: Release package artifact
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run build
+      - name: Pack
+        run: npm pack
+      - name: Publish GitHub release artifact
+        uses: softprops/action-gh-release@v2
+        with:
+          prerelease: true
+          files: verbis3d-core-*.tgz

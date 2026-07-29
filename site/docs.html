@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Documentation · Verbis3D</title>
+    <link rel="stylesheet" href="./styles/main.css" />
+  </head>
+  <body data-page="docs">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="./index.html">Verbis<span>3D</span></a
+        ><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+          Menu
+        </button>
+        <nav class="site-nav" id="site-nav" aria-label="Primary">
+          <a data-page="home" href="./index.html">Home</a
+          ><a data-page="docs" href="./docs.html">Docs</a
+          ><a data-page="examples" href="./examples.html">Examples</a
+          ><a data-page="playground" href="./playground.html">Playground</a
+          ><a data-page="architecture" href="./architecture.html">Architecture</a
+          ><a data-page="roadmap" href="./roadmap.html">Roadmap</a><a href="./api/index.html">API</a
+          ><a href="https://github.com/leondic1976/Deploy-Verbis3d">GitHub</a>
+        </nav>
+      </div>
+    </header>
+    <main id="main" class="docs-layout">
+      <aside class="docs-sidebar" aria-label="Documentation sections">
+        <h2>Get started</h2>
+        <a href="#get-started">Installation</a><a href="#first-scene">First scene</a>
+        <h2>Core concepts</h2>
+        <a href="#math">Math</a><a href="#scene-graph">Scene graph</a><a href="#camera">Camera</a
+        ><a href="#renderer">Renderer</a><a href="#geometry">Geometry</a
+        ><a href="#animation">Animation</a><a href="#commands">Commands & AI</a
+        ><a href="#plugins-assets">Plugins & assets</a><a href="#testing">Testing</a
+        ><a href="./api/index.html">API reference</a>
+      </aside>
+      <article class="docs-content">
+        <p class="eyebrow">Documentation / 0.1 alpha</p>
+        <h1>Build your first Verbis3D scene.</h1>
+        <p class="lead">
+          The current package is an alpha source release. The examples below match the checked-in
+          public exports.
+        </p>
+        <section id="get-started">
+          <h2>Installation</h2>
+          <pre><code>npm install @verbis3d/core</code></pre>
+          <div class="callout">
+            <strong>Repository status:</strong> the package API is versioned as 0.1.0-alpha.1;
+            publishing to npm is not part of this release workflow.
+          </div>
+        </section>
+        <section id="first-scene">
+          <h2>First scene</h2>
+          <pre><code>import {
+  Engine, Scene, PerspectiveCamera, WebGL2Renderer,
+  Mesh, BoxGeometry, BasicMaterial
+} from "@verbis3d/core";
+
+const renderer = new WebGL2Renderer({ canvas });
+const scene = new Scene();
+const camera = new PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
+camera.position.set(0, 1.5, 5);
+const cube = new Mesh(new BoxGeometry(), new BasicMaterial({ color: [0.2, 0.7, 1, 1] }));
+scene.add(cube);
+const engine = new Engine({ renderer, scene, camera });
+engine.onUpdate((dt) => cube.rotateY(dt));
+engine.start();</code></pre>
+        </section>
+        <section id="math">
+          <h2>Math</h2>
+          <p>
+            Vectors, quaternions and matrices are mutable to support output reuse. Matrices are
+            column-major and angles are radians internally. A zero vector normalizes to zero; a
+            singular matrix inversion throws <code>RangeError</code>.
+          </p>
+        </section>
+        <section id="scene-graph">
+          <h2>Scene graph</h2>
+          <p>
+            <code>Object3D</code> rejects cycles, supports visible traversal, and propagates
+            local/world dirty state. Direct vector mutations through public methods invalidate
+            cached transforms.
+          </p>
+        </section>
+        <section id="camera">
+          <h2>Camera</h2>
+          <p>
+            Perspective and orthographic cameras maintain projection, view, view-projection and
+            frustum state. Public perspective field-of-view values are degrees.
+          </p>
+        </section>
+        <section id="renderer">
+          <h2>Renderer</h2>
+          <p>
+            The backend creates WebGL2 buffers, index buffers, VAOs and shader programs, then emits
+            indexed or non-indexed calls. Context creation failures provide a user-facing
+            compatibility message.
+          </p>
+        </section>
+        <section id="geometry">
+          <h2>Geometry & materials</h2>
+          <p>
+            Box, plane and UV sphere primitives provide positions, normals, UVs, indices and bounds.
+            <code>BasicMaterial</code> uses GLSL ES 3.00 and a solid RGBA uniform.
+          </p>
+        </section>
+        <section id="animation">
+          <h2>Animation</h2>
+          <p>
+            Scalar, Vector3 and Quaternion tracks support linear or spherical interpolation. Actions
+            expose play, pause, stop, loop, speed and seek controls. Skeletal animation is not
+            implemented.
+          </p>
+        </section>
+        <section id="commands">
+          <h2>Commands & AI</h2>
+          <pre><code>const controller = engine.useNaturalLanguage({
+  provider: new RuleBasedProvider()
+});
+await controller.execute("큐브를 오른쪽으로 2 이동");</code></pre>
+          <p>
+            Provider output always passes the runtime validator and command bus. Deletion is
+            permission-gated; ambiguous names stop execution; dry-run is supported.
+          </p>
+        </section>
+        <section id="plugins-assets">
+          <h2>Plugins & assets</h2>
+          <p>
+            Plugins have install/uninstall lifecycle isolation. JSON scenes serialize supported
+            primitives and colors. Texture loading uses <code>createImageBitmap</code>; full glTF
+            support is future work.
+          </p>
+        </section>
+        <section id="testing">
+          <h2>Testing</h2>
+          <pre><code>npm ci
+npm run format:check
+npm run lint
+npm run typecheck
+npm run test
+npm run test:coverage
+npm run build
+npm run test:e2e</code></pre>
+        </section>
+      </article>
+    </main>
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span>Verbis3D documentation</span><a href="./api/index.html">Generated API reference</a>
+      </div>
+    </footer>
+    <script type="module" src="./scripts/site.js"></script>
+  </body>
+</html>

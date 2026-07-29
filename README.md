@@ -1,51 +1,157 @@
 # Verbis3D
 
-**Verbis3D**는 웹 브라우저에서 동작하는 자체 3D 엔진 코어와 AI 자연어 제어 확장 계층을 개발하는 프로젝트입니다.
+Verbis3D is an experimental, AI-native web 3D engine implemented directly in TypeScript and
+WebGL2. It is not a Three.js wrapper and does not use another complete 3D engine internally.
 
-이 프로젝트는 Three.js, Babylon.js 같은 완성형 3D 엔진을 감싸는 래퍼가 아닙니다. WebGL2를 직접 사용해 렌더러, 장면 그래프, 객체 변환, 카메라, 메시, 재질, 애니메이션 등의 핵심 기능을 자체 구현합니다.
+The public API and release process are currently at `0.1.0-alpha.1`. APIs may change before a
+stable release.
 
-## 핵심 목표
+## Current development stage
 
-- 웹 표준 기반의 독립적인 3D 엔진 코어 개발
-- 객체 생성·이동·회전·크기 변경·형상 변형을 일관된 API로 제어
-- 외부 프로젝트에서 npm 패키지 또는 ES 모듈로 재사용
-- 자연어를 안전한 엔진 명령으로 변환하는 AI 확장 계층 제공
-- 렌더링, 물리, 애니메이션, 에셋, AI 기능을 교체 가능한 모듈로 구성
+| Area               | Status          | Evidence                                                                   |
+| ------------------ | --------------- | -------------------------------------------------------------------------- |
+| Math core          | Implemented     | Vector, quaternion, matrix, bounds, ray, plane and frustum tests           |
+| Scene graph        | Implemented     | Cycle-safe hierarchy, transforms, traversal and lifecycle tests            |
+| Cameras            | Implemented     | Perspective/orthographic matrices and frustum tests                        |
+| Geometry/material  | Implemented     | Box, plane, sphere, bounds and basic unlit material tests                  |
+| WebGL2 renderer    | Alpha           | Functional shader/buffer/VAO/indexed draw path; browser-tested cube        |
+| Engine loop        | Implemented     | Fixed/update/render phases, pause/resume and duplicate-start guard         |
+| Animation          | Foundation      | Scalar/vector/quaternion tracks and action playback; no skeletal animation |
+| Commands           | Implemented MVP | Validation, dry-run, history, permission and ambiguity handling            |
+| Natural language   | Implemented MVP | Offline Korean/English rules plus Ollama/compatible adapter boundaries     |
+| Assets/plugins     | Foundation      | JSON scene round-trip, texture load boundary and plugin lifecycle          |
+| Documentation site | Implemented     | Static docs, live cube, examples, API generation and offline Playground    |
 
-## 기본 원칙
+Planned but not implemented: glTF, skeletal animation, physically based materials, shadows,
+physics, production texture/material pipelines and a WebGPU backend.
 
-1. 엔진 코어는 특정 UI 프레임워크에 의존하지 않습니다.
-2. 렌더링 코어는 WebGL2부터 직접 구현합니다.
-3. AI 계층은 코어와 분리하며 선택적으로 설치할 수 있어야 합니다.
-4. 자연어 명령은 검증된 구조화 명령으로 변환한 뒤 실행합니다.
-5. 모든 공개 API는 문서, 타입, 테스트를 함께 제공합니다.
-6. 기능 추가보다 구조적 일관성과 예측 가능한 동작을 우선합니다.
+## Core characteristics
 
-## 초기 패키지 구상
+- Column-major, WebGL-compatible math written for Verbis3D
+- Dirty-state scene transforms and cycle-safe parent/child relationships
+- Backend-neutral renderer contract with a WebGL2 implementation
+- GLSL ES 3.00 solid-color material and indexed primitive rendering
+- Fixed-step and variable-step engine callbacks
+- Keyframe animation foundation with quaternion slerp
+- Structured command bus shared by code and natural-language integrations
+- No `eval`, `new Function`, or generated-script execution
+- JSON scene serialization and explicit plugin lifecycle
 
-```text
-@verbis3d/core       엔진 코어와 장면 그래프
-@verbis3d/math       벡터, 행렬, 쿼터니언
-@verbis3d/renderer   WebGL2 렌더링 계층
-@verbis3d/animation  애니메이션과 타임라인
-@verbis3d/ai         자연어 명령 해석 계층
-@verbis3d/devtools   디버거와 검사 도구
+## Install
+
+The source release can be built and packed locally:
+
+```bash
+npm ci
+npm run build
+npm pack
 ```
 
-## 현재 단계
+The package name is reserved as `@verbis3d/core`; this repository workflow does not publish it
+to npm yet.
 
-Phase 0 — 기반 설계 및 최소 실행 코어 구축
+## Quick start
 
-- [x] 프로젝트 개발 원칙 정의
-- [x] 기본 TypeScript 패키지 구조 생성
-- [x] 엔진 루프, 객체, 장면, 변환 구조 설계
-- [ ] WebGL2 컨텍스트 및 최소 렌더러 구현
-- [ ] 삼각형과 큐브 렌더링
-- [ ] 카메라 및 셰이더 시스템 구현
-- [ ] 자연어 명령 스키마 구현
+```ts
+import {
+  BasicMaterial,
+  BoxGeometry,
+  Engine,
+  Mesh,
+  PerspectiveCamera,
+  Scene,
+  WebGL2Renderer,
+} from "@verbis3d/core";
 
-상세 내용은 [`docs/`](./docs) 문서를 참고하십시오.
+const canvas = document.querySelector("canvas");
+if (!(canvas instanceof HTMLCanvasElement)) throw new Error("Canvas is required.");
 
-## 라이선스
+const renderer = new WebGL2Renderer({ canvas });
+const scene = new Scene();
+const camera = new PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
+camera.position.set(0, 1.5, 5);
 
-초기 개발 단계에서는 비공개 저장소로 운영합니다. 외부 공개 전 별도 라이선스를 확정합니다.
+const cube = new Mesh(new BoxGeometry(), new BasicMaterial({ color: [0.2, 0.7, 1, 1] }));
+cube.name = "cube";
+scene.add(cube);
+
+const engine = new Engine({ renderer, scene, camera });
+engine.onUpdate((deltaTime) => cube.rotateY(deltaTime));
+engine.start();
+```
+
+## Natural-language commands
+
+The offline provider does not need a remote service:
+
+```ts
+const naturalLanguage = engine.useNaturalLanguage({
+  provider: new RuleBasedProvider(),
+});
+
+await naturalLanguage.execute("큐브를 오른쪽으로 2 이동하고 45도 회전");
+```
+
+Provider output is treated as untrusted data. Every command passes schema, target, range and
+permission checks before public engine APIs are called.
+
+## Architecture
+
+```text
+Application → Public API → Engine / Scene Graph
+                            ↓
+                    Renderer interface
+                            ↓
+                       WebGL2 backend → GPU
+
+Natural language → Provider adapter → Structured command
+                 → Validator → Command bus → Public API
+```
+
+See [architecture](docs/architecture.md), [rendering pipeline](docs/rendering-pipeline.md) and
+[AI command system](docs/ai-command-system.md).
+
+## Browser support
+
+The renderer requires WebGL2, ES modules and modern browser APIs. Current Chromium, Firefox and
+Safari releases are the intended targets. The renderer throws a clear compatibility error when
+WebGL2 context creation fails. Headless or virtualized GPU environments may expose WebGL2
+differently from a hardware browser.
+
+## Development and verification
+
+```bash
+npm ci
+npm run format:check
+npm run lint
+npm run typecheck
+npm run test
+npm run test:coverage
+npm run build
+npm run docs:api
+npm run site:build
+npm run site:check
+npm run test:e2e
+```
+
+Run the site locally with `npm run site:dev`. Generated API documentation is written to
+`site/api/`; the deployable site is written to `site-dist/`.
+
+## Documentation and site
+
+- [Getting started](docs/getting-started.md)
+- [API overview](docs/api/README.md)
+- [Testing](docs/testing.md)
+- [Security](SECURITY.md)
+- [Deployment](docs/deployment.md)
+- Expected GitHub Pages URL:
+  `https://leondic1976.github.io/Deploy-Verbis3d/`
+
+## Roadmap and contributing
+
+The [roadmap](docs/roadmap.md) distinguishes implemented work from planned features. Read
+[CONTRIBUTING.md](CONTRIBUTING.md) before proposing a change.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
