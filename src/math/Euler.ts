@@ -1,4 +1,5 @@
 import { EPSILON } from "./Vector3.js";
+import type { Quaternion } from "./Quaternion.js";
 
 /** XYZ Euler rotation in radians. */
 export class Euler {
@@ -25,6 +26,22 @@ export class Euler {
 
   copy(value: Readonly<Euler>): this {
     return this.set(value.x, value.y, value.z);
+  }
+
+  /** Updates XYZ Euler angles from a normalized or non-normalized quaternion. */
+  setFromQuaternion(quaternion: Readonly<Quaternion>): this {
+    const length = Math.hypot(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
+    if (length <= EPSILON) return this.set(0, 0, 0);
+    const x = quaternion.x / length;
+    const y = quaternion.y / length;
+    const z = quaternion.z / length;
+    const w = quaternion.w / length;
+    const pitchSine = Math.min(1, Math.max(-1, 2 * (w * y - z * x)));
+    return this.set(
+      Math.atan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y)),
+      Math.asin(pitchSine),
+      Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z)),
+    );
   }
 
   clone(): Euler {

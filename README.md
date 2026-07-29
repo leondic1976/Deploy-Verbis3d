@@ -18,9 +18,11 @@ stable release.
 | Engine loop        | Implemented     | Fixed/update/render phases, pause/resume and duplicate-start guard         |
 | Animation          | Foundation      | Scalar/vector/quaternion tracks and action playback; no skeletal animation |
 | Commands           | Implemented MVP | Validation, dry-run, history, permission and ambiguity handling            |
-| Natural language   | Implemented MVP | Offline Korean/English rules plus Ollama/compatible adapter boundaries     |
+| Natural language   | Implemented MVP | Korean/English create, transform, color, visibility, duplicate and motion  |
 | Assets/plugins     | Foundation      | JSON scene round-trip, texture load boundary and plugin lifecycle          |
-| Documentation site | Implemented     | Static docs, live cube, examples, API generation and offline Playground    |
+| Playground         | Implemented     | Beginner-to-expert scene lab, undo/redo, commands, JSON and diagnostics    |
+| Learning examples  | Implemented     | 16 filterable, CI-typechecked TypeScript sources with source viewer        |
+| Documentation site | Implemented     | Static guides, generated API reference, live demos and checked local links |
 
 Planned but not implemented: glTF, skeletal animation, physically based materials, shadows,
 physics, production texture/material pipelines and a WebGPU backend.
@@ -89,11 +91,15 @@ const naturalLanguage = engine.useNaturalLanguage({
   provider: new RuleBasedProvider(),
 });
 
-await naturalLanguage.execute("큐브를 오른쪽으로 2 이동하고 45도 회전");
+await naturalLanguage.execute("빨간 구를 만들어 오른쪽으로 2 이동하고 천천히 회전시켜");
 ```
 
 Provider output is treated as untrusted data. Every command passes schema, target, range and
 permission checks before public engine APIs are called.
+
+The progressive [Scene Lab](https://leondic1976.github.io/Deploy-Verbis3d/playground.html) exposes
+beginner direct edits, scene building, motion/camera controls, structured commands and safe scene
+JSON without requiring an external AI service.
 
 ## Architecture
 
@@ -140,6 +146,8 @@ Run the site locally with `npm run site:dev`. Generated API documentation is wri
 ## Documentation and site
 
 - [Getting started](docs/getting-started.md)
+- [Playground guide](docs/playground.md)
+- [Learning examples](docs/examples.md)
 - [API overview](docs/api/README.md)
 - [Testing](docs/testing.md)
 - [Security](SECURITY.md)

@@ -17,7 +17,14 @@ export class Transform {
     const mark = (): void => this.markLocalDirty();
     this.position.onChange(mark);
     this.scale.onChange(mark);
-    this.quaternion.onChange(mark);
+    this.quaternion.onChange(() => {
+      if (!this.syncingRotation) {
+        this.syncingRotation = true;
+        this.rotation.setFromQuaternion(this.quaternion);
+        this.syncingRotation = false;
+      }
+      this.markLocalDirty();
+    });
     this.rotation.onChange(() => {
       if (!this.syncingRotation) {
         this.syncingRotation = true;

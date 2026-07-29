@@ -50,6 +50,9 @@ describe("engine core", () => {
     expect(visitor).toHaveBeenCalledTimes(1);
     root.rotateY(Math.PI / 2).translateZ(1);
     expect(root.position.x).toBeCloseTo(1);
+    expect(root.rotation.y).toBeCloseTo(Math.PI / 2);
+    root.rotation.set(0, Math.PI / 4, 0);
+    expect(root.quaternion.y).toBeCloseTo(Math.sin(Math.PI / 8));
     root.lookAt(new Vector3(0, 0, -1));
   });
 
