@@ -5,12 +5,12 @@ revealed progressively so a first-time learner and an engine developer can use t
 
 ## Levels
 
-| Level    | Primary job                         | Available tools                                                         |
-| -------- | ----------------------------------- | ----------------------------------------------------------------------- |
-| Beginner | Understand selection and transforms | guided tasks, Inspector, safe natural language                          |
-| Builder  | Assemble a scene                    | primitives, hierarchy, rename, duplicate, delete, material state        |
-| Advanced | Direct behavior                     | procedural motion, timeline preview, camera views, environment, presets |
-| Expert   | Inspect engine data                 | structured command dry-run, CommandResult, scene JSON, diagnostics      |
+| Level    | Primary job                         | Available tools                                                    |
+| -------- | ----------------------------------- | ------------------------------------------------------------------ |
+| Beginner | Understand selection and transforms | guided tasks, Inspector, safe natural language                     |
+| Builder  | Assemble a scene                    | primitives, hierarchy, rename, duplicate, delete, material state   |
+| Advanced | Direct behavior                     | procedural motion, timeline preview, camera controls, environment  |
+| Expert   | Inspect engine data                 | structured command dry-run, CommandResult, scene JSON, diagnostics |
 
 Changing level does not replace the scene. It only reveals additional controls, so learners can
 move forward or return to a simpler view without losing work.
@@ -30,8 +30,28 @@ The Playground shows the resulting `EngineCommand[]` next to the input. A dry-ru
 same data without mutating the scene. Applied changes are stored in a bounded scene-snapshot undo
 stack.
 
+Selection-aware phrases resolve to the current viewport or hierarchy selection:
+
+```text
+선택한 객체를 위로 1 이동
+이 객체를 45도 회전
+선택한 큐브를 두 배로 키워
+```
+
+The provider panel offers three modes:
+
+- **Offline rules**: deterministic Korean/English commands without a network or key.
+- **Ollama**: configurable endpoint and model, defaulting to local Ollama and `qwen3:8b`.
+- **OpenAI-compatible API**: configurable base endpoint, model and optional bearer key.
+
+The connection test reports endpoint, CORS and server availability errors before a command is
+submitted. API keys remain only in the current tab's JavaScript memory and are excluded from logs,
+storage and scene JSON. Production deployments should keep long-lived keys in a server-side proxy.
+
 ## Advanced controls
 
+- Viewport ray picking with a visible selected-object marker
+- Pointer drag orbit, Shift/middle/right drag pan, wheel/pinch zoom and reset
 - Scene hierarchy search, visibility and safe reparenting
 - Box, sphere, plane and non-rendering group nodes
 - Position, Euler rotation and scale editing
@@ -44,8 +64,9 @@ stack.
 
 ## Current boundaries
 
-Object selection is performed in the hierarchy; viewport ray picking and transform gizmos require
-a picking subsystem that is not yet part of the engine. Procedural Playground motion is stored as
-data in `userData`; the next animation update should translate `animateObject` into reusable
-`AnimationClip` instances. The update backlog is tracked in
+Viewport picking uses mesh bounding boxes rather than triangle-precise intersections, and transform
+gizmos are not implemented. Procedural Playground motion is stored as data in `userData`; the next
+animation update should translate `animateObject` into reusable `AnimationClip` instances. Remote
+provider calls are direct browser requests and therefore depend on provider CORS configuration.
+The update backlog is tracked in
 [playground-learning-update.md](audit/playground-learning-update.md).

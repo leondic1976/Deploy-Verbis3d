@@ -7,6 +7,8 @@ import {
   Mesh,
   MockAIProvider,
   NaturalLanguageController,
+  OllamaProvider,
+  OpenAICompatibleProvider,
   RuleBasedProvider,
   Scene,
 } from "../../src/index.js";
@@ -66,13 +68,13 @@ describe("command and natural-language layers", () => {
         parameters: { visible: false },
       }).error?.code,
     ).toBe("AMBIGUOUS_TARGET");
-    expect(
-      bus.execute({
-        version: "1.0",
-        command: "createObject",
-        parameters: { shape: "sphere", name: "ball" },
-      }).success,
-    ).toBe(true);
+    const creation = bus.execute({
+      version: "1.0",
+      command: "createObject",
+      parameters: { shape: "sphere", name: "ball" },
+    });
+    expect(creation.success).toBe(true);
+    expect(bus.selectedObject?.name).toBe("ball");
   });
 
   it("parses offline Korean commands and validates provider output", async () => {
@@ -170,9 +172,99 @@ describe("command and natural-language layers", () => {
     expect(await provider.parseCommand("cube를 선택", { scene })).toMatchObject([
       { command: "selectObject", target: { name: "cube" } },
     ]);
+    expect(await provider.parseCommand("구를 선택해", { scene })).toMatchObject([
+      { command: "selectObject", target: { name: "sphere" } },
+    ]);
     expect(await provider.parseCommand("cube를 삭제", { scene })).toMatchObject([
       { command: "deleteObject", target: { name: "cube" } },
     ]);
     await expect(provider.parseCommand("무언가 만들어", { scene })).rejects.toThrow(/shape/);
+  });
+
+  it("uses the selected generated object when language names its generic shape", async () => {
+    const scene = new Scene();
+    const first = new Mesh(new BoxGeometry(), new BasicMaterial());
+    first.name = "cube";
+    const selected = new Mesh(new BoxGeometry(), new BasicMaterial());
+    selected.name = "cube-2";
+    scene.add(first, selected);
+    const commands = await new RuleBasedProvider().parseCommand("큐브를 오른쪽으로 1 이동", {
+      scene,
+      selectedObjectName: "cube-2",
+    });
+    expect(commands[0]?.target).toEqual({ name: "cube-2" });
+  });
+
+  it("passes selected scene context to Ollama without executing provider text", async () => {
+    const scene = new Scene();
+    const cube = new Mesh(new BoxGeometry(), new BasicMaterial());
+    cube.name = "selected-cube";
+    scene.add(cube);
+    let requestBody = "";
+    const provider = new OllamaProvider({
+      model: "qwen3:8b",
+      fetch: (_input, init) => {
+        requestBody = typeof init?.body === "string" ? init.body : "";
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              message: {
+                content: JSON.stringify([
+                  {
+                    version: "1.0",
+                    command: "selectObject",
+                    target: { name: "selected-cube" },
+                    parameters: {},
+                  },
+                ]),
+              },
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          ),
+        );
+      },
+    });
+    const commands = await provider.parseCommand("선택한 객체", {
+      scene,
+      selectedObjectName: "selected-cube",
+    });
+    expect(commands[0]?.command).toBe("selectObject");
+    expect(requestBody).toContain('\\"selectedObjectName\\":\\"selected-cube\\"');
+    expect(requestBody).toContain('\\"name\\":\\"selected-cube\\"');
+  });
+
+  it("sends an API key only as a compatible-provider authorization header", async () => {
+    const scene = new Scene();
+    let authorization = "";
+    const provider = new OpenAICompatibleProvider({
+      baseUrl: "https://provider.example/v1",
+      model: "safe-command-model",
+      apiKey: "memory-only-key",
+      fetch: (_input, init) => {
+        authorization = new Headers(init?.headers).get("authorization") ?? "";
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              choices: [
+                {
+                  message: {
+                    content: JSON.stringify({
+                      version: "1.0",
+                      command: "createObject",
+                      parameters: { shape: "box", name: "box" },
+                    }),
+                  },
+                },
+              ],
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          ),
+        );
+      },
+    });
+    expect((await provider.parseCommand("상자를 만들어", { scene }))[0]?.command).toBe(
+      "createObject",
+    );
+    expect(authorization).toBe("Bearer memory-only-key");
   });
 });

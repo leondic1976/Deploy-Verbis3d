@@ -16,10 +16,10 @@ export class OllamaProvider implements AIProvider {
   constructor(private readonly options: OllamaProviderOptions) {
     if (!options.model) throw new Error("Ollama model is required.");
     this.baseUrl = (options.baseUrl ?? "http://127.0.0.1:11434").replace(/\/$/, "");
-    this.fetcher = options.fetch ?? fetch;
+    this.fetcher = options.fetch ?? globalThis.fetch.bind(globalThis);
   }
 
-  async parseCommand(input: string, _context: AICommandContext): Promise<EngineCommand[]> {
+  async parseCommand(input: string, context: AICommandContext): Promise<EngineCommand[]> {
     let response: Response;
     try {
       response = await this.fetcher(`${this.baseUrl}/api/chat`, {
@@ -30,7 +30,7 @@ export class OllamaProvider implements AIProvider {
           stream: false,
           format: "json",
           messages: [
-            { role: "system", content: systemPrompt() },
+            { role: "system", content: systemPrompt(context) },
             { role: "user", content: input },
           ],
         }),

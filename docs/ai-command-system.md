@@ -4,6 +4,11 @@ Providers implement `AIProvider.parseCommand(input, context)` and return structu
 `RuleBasedProvider` works offline; `MockAIProvider` is deterministic; Ollama and compatible
 providers isolate transport and parsing.
 
+The Playground passes a bounded scene context containing the current selection and up to 100 exact
+object names to remote providers. Names are explicitly marked as untrusted JSON data in the system
+prompt. Successful non-dry-run commands synchronize `CommandBus.selectedObject`, so subsequent
+phrases such as `선택한 객체` resolve consistently. Deleting the selected object clears selection.
+
 The offline provider supports deterministic Korean and English intents:
 
 | Intent           | Example                         | Emitted command                   |
@@ -41,4 +46,30 @@ Safety controls include:
 - deletion permission disabled by default;
 - dry-run;
 - bounded command history;
+- selected-object and exact scene-name context for provider target resolution;
 - no evaluation of provider text or generated code.
+
+## Provider configuration
+
+`OllamaProvider` posts to `{baseUrl}/api/chat`. The local default is
+`http://127.0.0.1:11434`; browser use requires Ollama to permit the site's origin, commonly through
+`OLLAMA_ORIGINS`. `OpenAICompatibleProvider` posts to `{baseUrl}/chat/completions` and sends an
+optional key only in the `Authorization: Bearer ...` header.
+
+```ts
+const local = new OllamaProvider({
+  baseUrl: "http://127.0.0.1:11434",
+  model: "qwen3:8b",
+});
+
+const hosted = new OpenAICompatibleProvider({
+  baseUrl: "https://provider.example/v1",
+  model: "command-model",
+  apiKey: shortLivedKey,
+});
+```
+
+The static Playground keeps endpoint, model and key values in page memory only. It does not persist
+them to local storage, session storage, URLs, logs or exported scenes. Direct browser calls are
+intended for local learning and short-lived test credentials; production applications should use a
+server-controlled proxy.

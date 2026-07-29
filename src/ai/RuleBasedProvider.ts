@@ -368,6 +368,22 @@ export class RuleBasedProvider implements AIProvider {
       .find((name) => input.includes(name.toLowerCase()));
     if (explicit) return explicit;
 
+    if (
+      context.selectedObjectName &&
+      this.includes(input, [
+        "선택한",
+        "선택된",
+        "이 객체",
+        "이것",
+        "현재 객체",
+        "selected",
+        "this object",
+        "current object",
+      ])
+    ) {
+      return context.selectedObjectName;
+    }
+
     const aliases: ReadonlyArray<readonly [readonly string[], string]> = [
       [["큐브", "상자", "박스", "cube", "box"], "cube"],
       [["구체", "공", "구", "sphere", "ball"], "sphere"],
@@ -375,7 +391,14 @@ export class RuleBasedProvider implements AIProvider {
       [["자동차", "car"], "car"],
     ];
     for (const [terms, name] of aliases) {
-      if (this.includes(input, terms)) return name;
+      if (!this.includes(input, terms)) continue;
+      if (
+        context.selectedObjectName &&
+        context.selectedObjectName.toLowerCase().includes(name.toLowerCase())
+      ) {
+        return context.selectedObjectName;
+      }
+      return name;
     }
     if (context.selectedObjectName) return context.selectedObjectName;
     throw new Error("The command does not identify a target or selected object.");

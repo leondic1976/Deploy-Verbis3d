@@ -15,10 +15,10 @@ export class OpenAICompatibleProvider implements AIProvider {
 
   constructor(private readonly options: OpenAICompatibleProviderOptions) {
     if (!options.model || !options.baseUrl) throw new Error("Model and base URL are required.");
-    this.fetcher = options.fetch ?? fetch;
+    this.fetcher = options.fetch ?? globalThis.fetch.bind(globalThis);
   }
 
-  async parseCommand(input: string, _context: AICommandContext): Promise<EngineCommand[]> {
+  async parseCommand(input: string, context: AICommandContext): Promise<EngineCommand[]> {
     const headers: Record<string, string> = { "content-type": "application/json" };
     if (this.options.apiKey) headers["authorization"] = `Bearer ${this.options.apiKey}`;
     let response: Response;
@@ -30,7 +30,7 @@ export class OpenAICompatibleProvider implements AIProvider {
           model: this.options.model,
           response_format: { type: "json_object" },
           messages: [
-            { role: "system", content: systemPrompt() },
+            { role: "system", content: systemPrompt(context) },
             { role: "user", content: input },
           ],
         }),

@@ -37,6 +37,131 @@ test("playground edits transforms and runs an offline natural-language command",
   await expect(page.locator("#position-x")).toHaveValue("0.00");
 });
 
+test("playground supports viewport picking, orbit, pan and zoom", async ({ page }) => {
+  await page.goto("./playground.html");
+  const canvas = page.locator("#playground-canvas");
+  const initialDistance = Number(await canvas.getAttribute("data-camera-distance"));
+  const initialYaw = await canvas.getAttribute("data-camera-yaw");
+
+  await canvas.hover();
+  await page.mouse.wheel(0, -320);
+  await expect
+    .poll(async () => Number(await canvas.getAttribute("data-camera-distance")))
+    .toBeLessThan(initialDistance);
+
+  const canvasBox = await canvas.boundingBox();
+  expect(canvasBox).not.toBeNull();
+  if (!canvasBox) return;
+  await page.mouse.move(canvasBox.x + canvasBox.width * 0.5, canvasBox.y + canvasBox.height * 0.5);
+  await page.mouse.down();
+  await page.mouse.move(
+    canvasBox.x + canvasBox.width * 0.62,
+    canvasBox.y + canvasBox.height * 0.58,
+    { steps: 8 },
+  );
+  await page.mouse.up();
+  await expect(canvas).not.toHaveAttribute("data-camera-yaw", initialYaw ?? "");
+
+  await page.getByRole("button", { name: "Reset view" }).click();
+  await page.locator(".scene-object-button").filter({ hasText: "sphere" }).click();
+  await expect(page.locator("#selected-name")).toHaveText("sphere");
+  const markerBox = await page.locator("#selection-marker").boundingBox();
+  expect(markerBox).not.toBeNull();
+  if (!markerBox) return;
+  const spherePoint = {
+    x: markerBox.x + markerBox.width / 2,
+    y: markerBox.y + markerBox.height / 2,
+  };
+  await page.locator(".scene-object-button").filter({ hasText: "cube" }).click();
+  await page.mouse.click(spherePoint.x, spherePoint.y);
+  await expect(page.locator("#selected-name")).toHaveText("sphere");
+  await expect(canvas).toHaveAttribute("data-selected-object", "sphere");
+});
+
+test("selected-object language and an Ollama provider share validated scene context", async ({
+  page,
+}) => {
+  let providerRequest = "";
+  await page.route("**/api/tags", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ models: [{ name: "qwen3:8b" }] }),
+    });
+  });
+  await page.route("**/api/chat", async (route) => {
+    if (route.request().method() === "OPTIONS") {
+      await route.fulfill({
+        status: 204,
+        headers: {
+          "access-control-allow-origin": "*",
+          "access-control-allow-methods": "POST, OPTIONS",
+          "access-control-allow-headers": "content-type",
+          "access-control-allow-private-network": "true",
+        },
+      });
+      return;
+    }
+    providerRequest = route.request().postData() ?? "";
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers: {
+        "access-control-allow-origin": "*",
+        "access-control-allow-private-network": "true",
+      },
+      body: JSON.stringify({
+        message: {
+          content: JSON.stringify([
+            {
+              version: "1.0",
+              command: "moveObject",
+              target: { name: "sphere" },
+              parameters: { x: 0, y: 1, z: 0, space: "world" },
+            },
+          ]),
+        },
+      }),
+    });
+  });
+
+  await page.goto("./playground.html");
+  await page.locator("#natural-command").fill("구를 선택해");
+  await page.getByRole("button", { name: "Validate and run" }).click();
+  await expect(page.locator("#selected-name")).toHaveText("sphere");
+  await page.locator("#natural-command").fill("선택한 객체를 위로 1 이동");
+  await page.getByRole("button", { name: "Validate and run" }).click();
+  await expect(page.locator("#selected-name")).toHaveText("sphere");
+  await expect(page.locator("#position-y")).toHaveValue("1.00");
+
+  await page.locator("#provider-settings").click();
+  await page.locator("#provider-mode").selectOption("ollama");
+  const providerEndpoint = new URL("./mock-ollama", page.url()).href.replace(/\/$/, "");
+  await page.locator("#provider-endpoint").fill(providerEndpoint);
+  await page.getByRole("button", { name: "Test connection" }).click();
+  await expect(page.locator("#provider-result")).toHaveAttribute("data-state", "success");
+  await page.locator("#natural-command").fill("선택한 객체를 위로 이동");
+  await page.getByRole("button", { name: "Validate and run" }).click();
+  await expect(page.locator("#command-result")).toHaveAttribute("data-state", "success");
+  expect(providerRequest).toContain('\\"selectedObjectName\\":\\"sphere\\"');
+  expect(providerRequest).toContain('\\"name\\":\\"sphere\\"');
+
+  await page.locator("#provider-mode").selectOption("compatible");
+  await page.locator("#provider-endpoint").fill("https://provider.example/v1");
+  await page.locator("#provider-model").fill("command-model");
+  await page.locator("#provider-api-key").fill("tab-memory-only");
+  await expect(page.locator("#provider-api-key")).toHaveAttribute("type", "password");
+  const storedValues = await page.evaluate(() => {
+    const values = (storage: Storage) =>
+      Array.from({ length: storage.length }, (_, index) => {
+        const key = storage.key(index);
+        return key ? storage.getItem(key) : "";
+      }).join(" ");
+    return `${values(localStorage)} ${values(sessionStorage)}`;
+  });
+  expect(storedValues).not.toContain("tab-memory-only");
+});
+
 test("playground progressively reveals builder, motion and expert tools", async ({ page }) => {
   await page.goto("./playground.html");
   const objectCount = page.locator("#object-count");

@@ -8,21 +8,21 @@ stable release.
 
 ## Current development stage
 
-| Area               | Status          | Evidence                                                                   |
-| ------------------ | --------------- | -------------------------------------------------------------------------- |
-| Math core          | Implemented     | Vector, quaternion, matrix, bounds, ray, plane and frustum tests           |
-| Scene graph        | Implemented     | Cycle-safe hierarchy, transforms, traversal and lifecycle tests            |
-| Cameras            | Implemented     | Perspective/orthographic matrices and frustum tests                        |
-| Geometry/material  | Implemented     | Box, plane, sphere, bounds and basic unlit material tests                  |
-| WebGL2 renderer    | Alpha           | Functional shader/buffer/VAO/indexed draw path; browser-tested cube        |
-| Engine loop        | Implemented     | Fixed/update/render phases, pause/resume and duplicate-start guard         |
-| Animation          | Foundation      | Scalar/vector/quaternion tracks and action playback; no skeletal animation |
-| Commands           | Implemented MVP | Validation, dry-run, history, permission and ambiguity handling            |
-| Natural language   | Implemented MVP | Korean/English create, transform, color, visibility, duplicate and motion  |
-| Assets/plugins     | Foundation      | JSON scene round-trip, texture load boundary and plugin lifecycle          |
-| Playground         | Implemented     | Beginner-to-expert scene lab, undo/redo, commands, JSON and diagnostics    |
-| Learning examples  | Implemented     | 16 filterable, CI-typechecked TypeScript sources with source viewer        |
-| Documentation site | Implemented     | Static guides, generated API reference, live demos and checked local links |
+| Area               | Status          | Evidence                                                                    |
+| ------------------ | --------------- | --------------------------------------------------------------------------- |
+| Math core          | Implemented     | Vector, quaternion, matrix, bounds, ray, plane and frustum tests            |
+| Scene graph        | Implemented     | Cycle-safe hierarchy, transforms, traversal and lifecycle tests             |
+| Cameras            | Implemented     | Perspective/orthographic matrices and frustum tests                         |
+| Geometry/material  | Implemented     | Box, plane, sphere, bounds and basic unlit material tests                   |
+| WebGL2 renderer    | Alpha           | Functional shader/buffer/VAO/indexed draw path; browser-tested cube         |
+| Engine loop        | Implemented     | Fixed/update/render phases, pause/resume and duplicate-start guard          |
+| Animation          | Foundation      | Scalar/vector/quaternion tracks and action playback; no skeletal animation  |
+| Commands           | Implemented MVP | Validation, dry-run, history, permission and ambiguity handling             |
+| Natural language   | Implemented MVP | Selection-aware offline rules plus Ollama and compatible API adapters       |
+| Assets/plugins     | Foundation      | JSON scene round-trip, texture load boundary and plugin lifecycle           |
+| Playground         | Implemented     | Picking, orbit/pan/zoom, four learning levels, commands, JSON and providers |
+| Learning examples  | Implemented     | 16 filterable, CI-typechecked TypeScript sources with source viewer         |
+| Documentation site | Implemented     | Static guides, generated API reference, live demos and checked local links  |
 
 Planned but not implemented: glTF, skeletal animation, physically based materials, shadows,
 physics, production texture/material pipelines and a WebGPU backend.
@@ -94,12 +94,22 @@ const naturalLanguage = engine.useNaturalLanguage({
 await naturalLanguage.execute("빨간 구를 만들어 오른쪽으로 2 이동하고 천천히 회전시켜");
 ```
 
+In the Scene Lab, click an object in the viewport or hierarchy and use phrases such as
+`선택한 객체를 위로 1 이동`. The selected object is included in provider context and remains selected
+after successful create, select and transform commands.
+
+The provider panel can switch between offline rules, a local Ollama endpoint and an
+OpenAI-compatible endpoint. Ollama defaults to `http://127.0.0.1:11434` with model `qwen3:8b`.
+Compatible endpoints accept a model and optional API key. Playground credentials are held only in
+the current tab's JavaScript memory; they are not written to browser storage or scene JSON. A
+server-side proxy is recommended for production credentials.
+
 Provider output is treated as untrusted data. Every command passes schema, target, range and
 permission checks before public engine APIs are called.
 
 The progressive [Scene Lab](https://leondic1976.github.io/Deploy-Verbis3d/playground.html) exposes
-beginner direct edits, scene building, motion/camera controls, structured commands and safe scene
-JSON without requiring an external AI service.
+beginner direct edits, canvas picking, orbit/pan/zoom camera controls, scene building,
+motion controls, structured commands and safe scene JSON without requiring an external AI service.
 
 ## Architecture
 
