@@ -14,6 +14,7 @@ The offline provider supports deterministic Korean and English intents:
 | Intent           | Example                         | Emitted command                   |
 | ---------------- | ------------------------------- | --------------------------------- |
 | Create           | `빨간 구를 만들어`              | `createObject`, `setColor`        |
+| Compound create  | `파란 자동차를 만들어`          | `createObject`, `setColor`        |
 | Multi-create     | `파란 큐브 3개를 만들어`        | three creates plus arranged moves |
 | Move             | `sphere를 오른쪽으로 2 이동`    | `moveObject`                      |
 | Rotate           | `큐브를 45도 회전`              | `rotateObject`                    |
@@ -22,9 +23,11 @@ The offline provider supports deterministic Korean and English intents:
 | Visibility       | `cube hide` / `cube show`       | `setVisible`                      |
 | Duplicate/delete | `cube duplicate` / `cube 삭제`  | permission-checked commands       |
 
-Object creation is limited to box, sphere and plane primitives. Multi-create is capped at ten
-objects per instruction. This grammar is intentionally explicit and testable; it is not presented
-as general language understanding.
+Object creation supports box, sphere and plane primitives plus editable procedural car and face
+hierarchies. Multi-create is capped at ten objects per instruction. Compound-model color changes
+apply only to parts marked with the primary color role, preserving windows, wheels, eyes and hair.
+This grammar is intentionally explicit and testable; it is not presented as general language
+understanding.
 
 ```mermaid
 flowchart TD

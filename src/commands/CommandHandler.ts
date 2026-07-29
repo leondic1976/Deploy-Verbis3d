@@ -3,6 +3,7 @@ import { Object3D } from "../core/Object3D.js";
 import type { Scene } from "../core/Scene.js";
 import { BoxGeometry, PlaneGeometry, SphereGeometry } from "../geometry/index.js";
 import { BasicMaterial } from "../materials/index.js";
+import { createProceduralCar, createProceduralFace } from "../utilities/index.js";
 import type { EngineCommand } from "./Command.js";
 import type { CommandResult } from "./CommandResult.js";
 
@@ -57,11 +58,20 @@ export class CommandHandler {
           break;
         case "duplicateObject": {
           const duplicate = target.clone(true);
-          duplicate.name = this.string(
+          const sourceName = target.name;
+          const duplicateName = this.string(
             command.parameters,
             "name",
-            `${target.name || target.type} copy`,
+            `${sourceName || target.type} copy`,
           );
+          duplicate.name = duplicateName;
+          if (sourceName) {
+            duplicate.traverse((object) => {
+              if (object !== duplicate && object.name.startsWith(`${sourceName}-`)) {
+                object.name = `${duplicateName}${object.name.slice(sourceName.length)}`;
+              }
+            });
+          }
           (target.parent ?? context.scene).add(duplicate);
           return { success: true, command: command.command, dryRun: false, targetId: duplicate.id };
         }
@@ -85,6 +95,7 @@ export class CommandHandler {
   ): CommandResult {
     if (dryRun) return { success: true, command: command.command, dryRun: true };
     const shape = this.string(command.parameters, "shape", "box");
+    const name = this.string(command.parameters, "name", shape);
     const geometry =
       shape === "sphere"
         ? new SphereGeometry()
@@ -93,9 +104,16 @@ export class CommandHandler {
           : shape === "box"
             ? new BoxGeometry()
             : null;
-    if (!geometry) return this.error(command, "INVALID_SCHEMA", `Unknown shape '${shape}'.`);
-    const object = new Mesh(geometry, new BasicMaterial());
-    object.name = this.string(command.parameters, "name", shape);
+    const object =
+      shape === "car"
+        ? createProceduralCar({ name })
+        : shape === "face"
+          ? createProceduralFace({ name })
+          : geometry
+            ? new Mesh(geometry, new BasicMaterial())
+            : null;
+    if (!object) return this.error(command, "INVALID_SCHEMA", `Unknown shape '${shape}'.`);
+    object.name = name;
     context.scene.add(object);
     return { success: true, command: command.command, dryRun: false, targetId: object.id };
   }
@@ -137,7 +155,11 @@ export class CommandHandler {
   }
 
   private color(target: Object3D, parameters: Record<string, unknown>): void {
-    if (!(target instanceof Mesh) || !(target.material instanceof BasicMaterial)) {
+    const meshes: Mesh[] = [];
+    target.traverse((object) => {
+      if (object instanceof Mesh && object.material instanceof BasicMaterial) meshes.push(object);
+    });
+    if (meshes.length === 0) {
       throw new Error("Target does not use a color material.");
     }
     const value = parameters["color"];
@@ -148,7 +170,10 @@ export class CommandHandler {
     ) {
       throw new Error("Color must be an RGB or RGBA numeric array.");
     }
-    target.material.color.set(value[0]!, value[1]!, value[2]!, value[3] ?? 1);
+    const primaryMeshes = meshes.filter((mesh) => mesh.userData["colorRole"] === "primary");
+    for (const mesh of primaryMeshes.length > 0 ? primaryMeshes : meshes) {
+      (mesh.material as BasicMaterial).color.set(value[0]!, value[1]!, value[2]!, value[3] ?? 1);
+    }
   }
 
   private group(target: Object3D, command: EngineCommand, scene: Scene): void {

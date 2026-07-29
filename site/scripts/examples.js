@@ -11,6 +11,8 @@ import mathTransformSource from "../../examples/math-transform-pipeline/index.ts
 import naturalLanguageSource from "../../examples/natural-language/index.ts?raw";
 import naturalSceneSource from "../../examples/natural-language-scene/index.ts?raw";
 import pluginLifecycleSource from "../../examples/plugin-lifecycle/index.ts?raw";
+import proceduralCarSource from "../../examples/procedural-car/index.ts?raw";
+import proceduralFaceSource from "../../examples/procedural-face/index.ts?raw";
 import sceneGraphSource from "../../examples/scene-graph/index.ts?raw";
 import serializationSource from "../../examples/serialization-roundtrip/index.ts?raw";
 import structuredCommandsSource from "../../examples/structured-commands/index.ts?raw";
@@ -85,6 +87,16 @@ const examples = [
     source: engineLoopSource,
   },
   {
+    id: "procedural-car",
+    title: "Editable procedural car",
+    level: "builder",
+    topic: "rendering",
+    description: "Assemble a car from 22 selectable engine-native parts.",
+    learning: "Compound Object3D transforms, part lookup, recoloring and wheel updates.",
+    source: proceduralCarSource,
+    playground: "./playground.html?level=builder&preset=car-workshop",
+  },
+  {
     id: "structured-commands",
     title: "Structured commands",
     level: "builder",
@@ -131,6 +143,16 @@ const examples = [
     description: "Install a diagnostic extension and release its callback cleanly.",
     learning: "VerbisPlugin install/uninstall contracts and listener cleanup.",
     source: pluginLifecycleSource,
+  },
+  {
+    id: "procedural-face",
+    title: "Editable procedural face",
+    level: "advanced",
+    topic: "rendering",
+    description: "Build a stylized face bust from 18 independently editable parts.",
+    learning: "Hierarchical modeling, expression edits and root-level transformation.",
+    source: proceduralFaceSource,
+    playground: "./playground.html?level=advanced&preset=face-study",
   },
   {
     id: "natural-language",

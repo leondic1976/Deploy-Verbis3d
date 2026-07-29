@@ -18,6 +18,7 @@ export function systemPrompt(context?: AICommandContext): string {
     "Output an array of Verbis3D commands.",
     "Every command must contain version '1.0', command, target when needed, and parameters.",
     "Allowed commands: createObject, deleteObject, selectObject, moveObject, rotateObject, scaleObject, setColor, setVisible, animateObject, groupObjects, duplicateObject.",
+    "createObject supports these shape values: box, sphere, plane, car, face.",
     "Use exact object names from scene context.",
     "When the user says selected object, this object, or omits a target for an object operation, use selectedObjectName.",
     "Never output code, scripts, comments, markdown, or extra fields intended for execution.",

@@ -208,11 +208,46 @@ test("natural language creates, styles, moves and animates a new object", async 
   await expect(page.locator("#natural-command-preview")).toContainText("animateObject");
 });
 
+test("compound models can be created, transformed, selected by part and built with language", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  await page.goto("./playground.html?level=builder&preset=transform-lab");
+  await expect(page.locator("#selected-name")).toHaveText("rotated-box");
+  await expect(page.locator("#rotation-y")).toHaveValue("45.0");
+
+  await page.locator('[data-add-model="car"]').click();
+  await expect(page.locator("#selected-name")).toHaveText("car");
+  await expect(page.locator("#object-count")).toHaveText("27");
+  await page.locator("#position-x").fill("2");
+  await page.locator("#rotation-y").fill("30");
+  await page.locator("#scale-y").fill("1.25");
+  await expect(page.locator("#position-x")).toHaveValue("2.00");
+  await expect(page.locator("#rotation-y")).toHaveValue("30.0");
+  await expect(page.locator("#scale-y")).toHaveValue("1.25");
+
+  await page.locator(".scene-object-button").filter({ hasText: "car-front-left-wheel" }).click();
+  await expect(page.locator("#selected-name")).toHaveText("car-front-left-wheel");
+
+  await page.locator("#natural-command").fill("사람 얼굴을 만들어 왼쪽으로 1 이동하고 30도 회전");
+  await page.getByRole("button", { name: "Validate and run" }).click();
+  await expect(page.locator("#command-result")).toHaveText("3 command(s) validated and applied.");
+  await expect(page.locator("#selected-name")).toHaveText("face");
+  await expect(page.locator("#position-x")).toHaveValue("-1.00");
+  await expect(
+    page.locator(".scene-object-button").filter({ hasText: "face-mouth" }),
+  ).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
 test("example library filters and exposes complete verified source", async ({ page }) => {
   await page.goto("./examples.html");
-  await expect(page.locator("#example-count")).toHaveText("16 of 16 examples");
+  await expect(page.locator("#example-count")).toHaveText("18 of 18 examples");
   await page.locator('[data-example-level="expert"]').click();
-  await expect(page.locator("#example-count")).toHaveText("4 of 16 examples");
+  await expect(page.locator("#example-count")).toHaveText("4 of 18 examples");
   await page.getByRole("button", { name: /Natural-language scene recipe/ }).click();
   await expect(page.locator("#source-code")).toContainText("const recipe");
   await expect(page.locator("#source-code")).toContainText("controller.execute");
@@ -220,6 +255,37 @@ test("example library filters and exposes complete verified source", async ({ pa
     "href",
     /playground\.html\?level=advanced/,
   );
+});
+
+test("Korean guide exposes runnable modeling and provider instructions", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  await page.goto("./guide-ko.html");
+  await expect(
+    page.getByRole("heading", { name: "Verbis3D를 처음부터 사용해 보세요." }),
+  ).toBeVisible();
+  await expect(page.locator("#compound")).toContainText("자동차는 22개");
+  await expect(page.locator("#natural-language")).toContainText("EngineCommand");
+  await expect(page.getByRole("link", { name: "자동차 편집" })).toHaveAttribute(
+    "href",
+    /preset=car-workshop/,
+  );
+  expect(errors).toEqual([]);
+});
+
+test("Korean guide remains readable without horizontal overflow on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./guide-ko.html");
+  await expect(
+    page.getByRole("heading", { name: "Verbis3D를 처음부터 사용해 보세요." }),
+  ).toBeVisible();
+  const widthState = await page.evaluate(() => ({
+    viewport: window.innerWidth,
+    document: document.documentElement.scrollWidth,
+  }));
+  expect(widthState.document).toBeLessThanOrEqual(widthState.viewport);
 });
 
 test("mobile navigation and docs remain usable", async ({ page }) => {
@@ -248,4 +314,5 @@ test("playground remains usable without horizontal overflow on mobile", async ({
   expect(widthState.document).toBeLessThanOrEqual(widthState.viewport);
   await page.locator('[data-workspace-level="builder"]').click();
   await expect(page.locator('[data-add-primitive="sphere"]')).toBeVisible();
+  await expect(page.locator('[data-add-model="car"]')).toBeVisible();
 });

@@ -8,7 +8,7 @@ revealed progressively so a first-time learner and an engine developer can use t
 | Level    | Primary job                         | Available tools                                                    |
 | -------- | ----------------------------------- | ------------------------------------------------------------------ |
 | Beginner | Understand selection and transforms | guided tasks, Inspector, safe natural language                     |
-| Builder  | Assemble a scene                    | primitives, hierarchy, rename, duplicate, delete, material state   |
+| Builder  | Assemble a scene                    | primitives, compound models, hierarchy, duplicate, material state  |
 | Advanced | Direct behavior                     | procedural motion, timeline preview, camera controls, environment  |
 | Expert   | Inspect engine data                 | structured command dry-run, CommandResult, scene JSON, diagnostics |
 
@@ -22,6 +22,8 @@ Try these in order:
 ```text
 빨간 구를 만들어 오른쪽으로 2 이동
 파란 큐브 3개를 만들어
+파란 자동차를 만들어 오른쪽으로 2 이동하고 30도 회전
+사람 얼굴을 만들어 두 배로 키워
 sphere를 두 배로 키우고 계속 회전시켜
 cube hide
 ```
@@ -53,19 +55,20 @@ storage and scene JSON. Production deployments should keep long-lived keys in a 
 - Viewport ray picking with a visible selected-object marker
 - Pointer drag orbit, Shift/middle/right drag pan, wheel/pinch zoom and reset
 - Scene hierarchy search, visibility and safe reparenting
-- Box, sphere, plane and non-rendering group nodes
+- Box, sphere, plane, non-rendering groups, a 22-part car and an 18-part face bust
 - Position, Euler rotation and scale editing
 - RGBA material opacity, side, depth-test and depth-write state
 - Spin, bob and orbit metadata with a timeline preview
 - Perspective/front/top camera views and selection framing
 - Background and field-of-view controls
-- Four scene presets, including a 25-object draw-call exercise
+- Seven scene presets, including transform, car, face and 25-object draw-call exercises
 - Versioned JSON export/import
 
 ## Current boundaries
 
 Viewport picking uses mesh bounding boxes rather than triangle-precise intersections, and transform
-gizmos are not implemented. Procedural Playground motion is stored as data in `userData`; the next
+gizmos are not implemented. Compound roots use aggregate child bounds for selection framing.
+Procedural Playground motion is stored as data in `userData`; the next
 animation update should translate `animateObject` into reusable `AnimationClip` instances. Remote
 provider calls are direct browser requests and therefore depend on provider CORS configuration.
 The update backlog is tracked in

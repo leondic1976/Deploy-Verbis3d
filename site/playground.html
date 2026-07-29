@@ -24,7 +24,9 @@
           ><a data-page="examples" href="./examples.html">Examples</a
           ><a data-page="playground" href="./playground.html">Playground</a
           ><a data-page="architecture" href="./architecture.html">Architecture</a
-          ><a data-page="roadmap" href="./roadmap.html">Roadmap</a><a href="./api/index.html">API</a
+          ><a data-page="roadmap" href="./roadmap.html">Roadmap</a
+          ><a data-page="guide-ko" href="./guide-ko.html" lang="ko">한국어</a
+          ><a href="./api/index.html">API</a
           ><a href="https://github.com/leondic1976/Deploy-Verbis3d">GitHub</a>
         </nav>
       </div>
@@ -103,7 +105,7 @@
           </label>
           <ul class="scene-tree" id="scene-tree" aria-label="Scene hierarchy"></ul>
           <p class="empty-state" id="scene-empty" hidden>
-            No objects match this filter. Clear the search or add a primitive.
+            No objects match this filter. Clear the search or add an object.
           </p>
         </section>
 
@@ -116,7 +118,7 @@
           <div class="panel-heading">
             <div>
               <p class="panel-kicker">Create</p>
-              <h2 id="create-title">Add primitive</h2>
+              <h2 id="create-title">Add object</h2>
             </div>
           </div>
           <div class="primitive-grid">
@@ -131,6 +133,17 @@
             </button>
             <button type="button" data-add-primitive="group">
               <span aria-hidden="true">⌘</span> Group
+            </button>
+          </div>
+          <p class="object-library-label">Editable compound models</p>
+          <div class="primitive-grid compound-model-grid">
+            <button type="button" data-add-model="car">
+              <span aria-hidden="true">▰</span>
+              <span><strong>Car</strong><small>22 selectable parts</small></span>
+            </button>
+            <button type="button" data-add-model="face">
+              <span aria-hidden="true">◉</span>
+              <span><strong>Face bust</strong><small>18 selectable parts</small></span>
             </button>
           </div>
         </section>
@@ -151,8 +164,11 @@
             Preset
             <select id="scene-preset">
               <option value="starter">Starter composition</option>
+              <option value="transform-lab">Move · rotate · stretch lab</option>
               <option value="gallery">Material gallery</option>
               <option value="hierarchy">Orbital hierarchy</option>
+              <option value="car-workshop">Procedural car workshop</option>
+              <option value="face-study">Procedural face study</option>
               <option value="performance">25-object stress grid</option>
             </select>
           </label>
@@ -376,6 +392,15 @@
               <button type="button" data-command-example="큐브를 45도 회전">Rotate 45°</button>
               <button type="button" data-command-example="sphere up 1">Lift sphere</button>
               <button type="button" data-command-example="cube hide">Hide cube</button>
+              <button
+                type="button"
+                data-command-example="파란 자동차를 만들어 오른쪽으로 2 이동하고 30도 회전"
+              >
+                Build a car
+              </button>
+              <button type="button" data-command-example="사람 얼굴을 만들어 두 배로 키워">
+                Build a face
+              </button>
             </div>
             <p class="result" id="command-result" role="status">
               Commands are parsed into a schema and validated before execution.

@@ -10,7 +10,11 @@
 - Viewport object picking, selection marker, orbit/pan/zoom, camera presets and framing
 - Playground provider settings for offline rules, Ollama and OpenAI-compatible endpoints
 - Selection-aware provider context without persistent browser credential storage
-- Sixteen filterable and CI-typechecked learning examples with complete source viewing
+- Eighteen filterable and CI-typechecked learning examples with complete source viewing
+- Engine-native 22-part car and 18-part face factories with individually editable children
+- Move/rotate/stretch, procedural car and procedural face Playground presets
+- Detailed Korean setup, modeling, Playground and natural-language/provider documentation
+- Automated dependency/import checks that preserve the independent core boundary
 
 ### Changed
 
@@ -19,6 +23,7 @@
 - Synchronized command selection after successful object operations and cleared deleted selections
 - Bound browser-native fetch correctly in remote provider adapters
 - Kept Euler and quaternion rotation views synchronized after command-driven changes
+- Framed compound selections from aggregate child bounds and applied group colors by part role
 
 ## 0.1.0-alpha.1
 

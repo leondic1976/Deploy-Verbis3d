@@ -1,5 +1,6 @@
 import {
   BasicMaterial,
+  Box3,
   BoxGeometry,
   CommandBus,
   Engine,
@@ -17,9 +18,20 @@ import {
   SphereGeometry,
   Vector3,
   WebGL2Renderer,
+  createProceduralCar,
+  createProceduralFace,
 } from "../../src/index.ts";
 
 const LEVELS = ["beginner", "builder", "advanced", "expert"];
+const SCENE_PRESETS = [
+  "starter",
+  "transform-lab",
+  "gallery",
+  "hierarchy",
+  "car-workshop",
+  "face-study",
+  "performance",
+];
 const LEVEL_CONTENT = {
   beginner: {
     title: "Start with direct edits",
@@ -385,8 +397,23 @@ if (renderer) {
   const loadPreset = (name) => {
     clearScene();
     scene.background.set(0.025, 0.045, 0.065, 1);
+    let preferredSelection = null;
 
-    if (name === "gallery") {
+    if (name === "transform-lab") {
+      const moved = makeMesh("box", "moved-box", [0.16, 0.7, 1, 1]);
+      const rotated = makeMesh("box", "rotated-box", [1, 0.46, 0.18, 1]);
+      const stretched = makeMesh("sphere", "stretched-sphere", [0.52, 0.38, 0.96, 1]);
+      moved.position.set(-2.25, 0, 0);
+      rotated.rotation.set(Math.PI / 12, Math.PI / 4, 0);
+      stretched.position.set(2.25, 0, 0);
+      stretched.scale.set(0.7, 1.8, 0.7);
+      moved.userData["lesson"] = "Moved left with position.x";
+      rotated.userData["lesson"] = "Rotated 15° on X and 45° on Y";
+      stretched.userData["lesson"] = "Stretched vertically with scale.y";
+      scene.add(moved, rotated, stretched);
+      addFloor();
+      preferredSelection = rotated;
+    } else if (name === "gallery") {
       const colors = [
         [0.18, 0.72, 1, 1],
         [0.98, 0.36, 0.22, 1],
@@ -424,6 +451,19 @@ if (renderer) {
       rig.add(core, moonA, moonB);
       scene.add(rig);
       addFloor();
+    } else if (name === "car-workshop") {
+      const car = createProceduralCar({ name: "car" });
+      car.position.y = -1.35;
+      car.rotation.y = -Math.PI / 10;
+      scene.add(car);
+      addFloor();
+      preferredSelection = car;
+    } else if (name === "face-study") {
+      const face = createProceduralFace({ name: "face" });
+      face.position.y = -1.35;
+      scene.add(face);
+      addFloor();
+      preferredSelection = face;
     } else if (name === "performance") {
       for (let row = 0; row < 5; row += 1) {
         for (let column = 0; column < 5; column += 1) {
@@ -447,7 +487,7 @@ if (renderer) {
       addFloor();
     }
 
-    state.selected = firstObject() ?? null;
+    state.selected = preferredSelection ?? firstObject() ?? null;
     commandBus.selectedObject = state.selected;
     state.playhead = 0;
   };
@@ -950,26 +990,37 @@ if (renderer) {
     logActivity("camera", "Camera reset");
   };
 
-  const selectedWorldCenter = (object, out = new Vector3()) => {
+  const objectWorldBounds = (object, out = new Box3()) => {
+    out.makeEmpty();
     object.updateWorldMatrix(true, false);
-    if (object instanceof Mesh) {
-      const sphere = object.geometry.boundingSphere ?? object.geometry.computeBoundingSphere();
-      return out.copy(sphere.center).applyMatrix4(object.worldMatrix);
+    object.traverse((node) => {
+      if (!(node instanceof Mesh)) return;
+      node.updateWorldMatrix(true, false);
+      const bounds = node.geometry.boundingBox ?? node.geometry.computeBoundingBox();
+      for (const x of [bounds.min.x, bounds.max.x]) {
+        for (const y of [bounds.min.y, bounds.max.y]) {
+          for (const z of [bounds.min.z, bounds.max.z]) {
+            out.expandByPoint(new Vector3(x, y, z).applyMatrix4(node.worldMatrix));
+          }
+        }
+      }
+    });
+    if (out.isEmpty()) {
+      const elements = object.worldMatrix.elements;
+      out.expandByPoint(new Vector3(elements[12], elements[13], elements[14]));
     }
-    const elements = object.worldMatrix.elements;
-    return out.set(elements[12], elements[13], elements[14]);
+    return out;
+  };
+
+  const selectedWorldCenter = (object, out = new Vector3()) => {
+    return objectWorldBounds(object).getCenter(out);
   };
 
   const frameSelected = () => {
     if (!state.selected) return;
-    const target = selectedWorldCenter(state.selected);
-    const radius =
-      state.selected instanceof Mesh
-        ? (
-            state.selected.geometry.boundingSphere ??
-            state.selected.geometry.computeBoundingSphere()
-          ).radius
-        : 1;
+    const bounds = objectWorldBounds(state.selected);
+    const target = bounds.getCenter();
+    const radius = Math.max(0.5, bounds.getSize().length() * 0.5);
     state.cameraControls.target.copy(target);
     state.cameraControls.distance = Math.max(2.5, radius * 4.5);
     state.cameraControls.yaw = 0.63;
@@ -1198,6 +1249,21 @@ if (renderer) {
               );
         scene.add(object);
         selectObject(object, false);
+      });
+    });
+  }
+
+  for (const button of document.querySelectorAll("[data-add-model]")) {
+    button.addEventListener("click", () => {
+      const template = button.dataset.addModel;
+      mutateScene(`Add ${template} model`, () => {
+        const name = uniqueName(template);
+        const object =
+          template === "car" ? createProceduralCar({ name }) : createProceduralFace({ name });
+        object.position.y = -1.35;
+        scene.add(object);
+        selectObject(object, false);
+        frameSelected();
       });
     });
   }
@@ -1576,9 +1642,12 @@ if (renderer) {
   const requestedLevel = initialParameters.get("level");
   const initialLevel = LEVELS.includes(requestedLevel) ? requestedLevel : "beginner";
   const requestedCommand = initialParameters.get("command");
+  const requestedPreset = initialParameters.get("preset");
+  const initialPreset = SCENE_PRESETS.includes(requestedPreset) ? requestedPreset : "starter";
 
   try {
-    loadPreset("starter");
+    loadPreset(initialPreset);
+    byId("scene-preset").value = initialPreset;
     resize();
     syncCameraControls(new Vector3());
     refreshWorkspace();

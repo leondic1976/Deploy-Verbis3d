@@ -24,6 +24,21 @@ export default tseslint.config(
       "@typescript-eslint/no-floating-promises": "error",
       "@typescript-eslint/no-non-null-assertion": "off",
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            "three",
+            "three/*",
+            "@babylonjs/*",
+            "babylonjs",
+            "playcanvas",
+            "aframe",
+            "cesium",
+            "cesium/*",
+          ],
+        },
+      ],
     },
   },
   {
