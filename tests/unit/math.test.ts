@@ -33,6 +33,8 @@ describe("math core", () => {
     const halfway = new Quaternion().slerp(rotation, 0.5);
     expect(halfway.rotateVector(new Vector3(1, 0, 0)).z).toBeCloseTo(-Math.SQRT1_2);
     expect(new Quaternion().setFromEuler(new Euler(0, Math.PI / 2, 0)).equals(rotation)).toBe(true);
+    expect(new Euler().setFromQuaternion(rotation).y).toBeCloseTo(Math.PI / 2);
+    expect(new Euler(1, 1, 1).setFromQuaternion(new Quaternion(0, 0, 0, 0))).toEqual(new Euler());
     expect(() => new Quaternion(0, 0, 0, 0).invert()).toThrow(RangeError);
   });
 

@@ -1,9 +1,26 @@
-import { AnimationClip, AnimationMixer, Object3D, VectorKeyframeTrack } from "../../src/index.js";
+import {
+  AnimationClip,
+  AnimationMixer,
+  Object3D,
+  Quaternion,
+  QuaternionKeyframeTrack,
+  Vector3,
+  VectorKeyframeTrack,
+} from "../../src/index.js";
 
 const cube = new Object3D();
-const clip = new AnimationClip("move", [
-  new VectorKeyframeTrack("position", [0, 1], [0, 0, 0, 2, 0, 0]),
+const halfTurn = new Quaternion().setFromAxisAngle(Vector3.UP, Math.PI);
+const clip = new AnimationClip("move-and-turn", [
+  new VectorKeyframeTrack("position", [0, 1, 2], [0, 0, 0, 2, 1, 0, 0, 0, 0]),
+  new QuaternionKeyframeTrack(
+    "quaternion",
+    [0, 2],
+    [0, 0, 0, 1, halfTurn.x, halfTurn.y, halfTurn.z, halfTurn.w],
+  ),
 ]);
 const mixer = new AnimationMixer(cube);
-mixer.clipAction(clip).play();
+const action = mixer.clipAction(clip).play();
+
+// Advance from an Engine.onUpdate callback in a rendered application.
 mixer.update(0.5);
+action.pause().seek(1.25).play();

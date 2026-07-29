@@ -3,11 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Playground · Verbis3D</title>
+    <meta
+      name="description"
+      content="A progressive Verbis3D workspace for learning, scene building, animation and validated engine commands."
+    />
+    <title>Scene Lab Playground · Verbis3D</title>
     <link rel="stylesheet" href="./styles/main.css" />
   </head>
   <body data-page="playground">
-    <a class="skip-link" href="#main">Skip to content</a>
+    <a class="skip-link" href="#main">Skip to workspace</a>
     <header class="site-header">
       <div class="header-inner">
         <a class="brand" href="./index.html">Verbis<span>3D</span></a
@@ -25,66 +29,574 @@
         </nav>
       </div>
     </header>
-    <main id="main" class="playground-layout">
-      <section class="playground-stage" aria-labelledby="stage-title">
-        <h1 id="stage-title" style="position: absolute; left: -9999px">3D scene</h1>
-        <div class="canvas-shell">
-          <canvas id="playground-canvas" aria-label="Interactive Verbis3D cube scene"
-            >Your browser does not support canvas.</canvas
-          >
-        </div>
-      </section>
-      <aside class="inspector" aria-label="Scene inspector">
-        <p class="eyebrow">Offline playground</p>
-        <h2>Scene inspector</h2>
-        <ul class="object-list" aria-label="Scene objects">
-          <li>
-            <button type="button" aria-pressed="true">▣ cube <small>Mesh</small></button>
-          </li>
-        </ul>
-        <fieldset>
-          <legend>Position</legend>
-          <div class="field-grid">
-            <label>X<input id="position-x" type="number" step="0.1" /></label
-            ><label>Y<input id="position-y" type="number" step="0.1" /></label
-            ><label>Z<input id="position-z" type="number" step="0.1" /></label>
-          </div>
-        </fieldset>
-        <fieldset>
-          <legend>Rotation (degrees)</legend>
-          <div class="field-grid">
-            <label>X<input id="rotation-x" type="number" step="1" /></label
-            ><label>Y<input id="rotation-y" type="number" step="1" /></label
-            ><label>Z<input id="rotation-z" type="number" step="1" /></label>
-          </div>
-        </fieldset>
-        <fieldset>
-          <legend>Scale</legend>
-          <div class="field-grid">
-            <label>X<input id="scale-x" type="number" min="0.01" step="0.1" /></label
-            ><label>Y<input id="scale-y" type="number" min="0.01" step="0.1" /></label
-            ><label>Z<input id="scale-z" type="number" min="0.01" step="0.1" /></label>
-          </div>
-          <label style="margin-top: 0.75rem"
-            >Color<input id="object-color" type="color" value="#33b3ff"
-          /></label>
-        </fieldset>
-        <form class="command-form" id="command-form">
-          <label for="natural-command">Natural-language command</label
-          ><input id="natural-command" value="큐브를 오른쪽으로 2 이동" autocomplete="off" /><button
-            type="submit"
-          >
-            Validate and run
-          </button>
-        </form>
-        <p class="result" id="command-result" role="status">
-          Try: 큐브를 45도 회전 / 큐브를 숨겨 / cube up 1
-        </p>
-        <button class="button secondary" id="reset-scene" type="button" style="width: 100%">
-          Reset scene
+
+    <div class="workspace-bar" aria-label="Playground controls">
+      <div class="workspace-title">
+        <span class="workspace-mark" aria-hidden="true">V3</span>
+        <span><strong>Scene Lab</strong><small>Local WebGL2 workspace</small></span>
+      </div>
+      <div class="level-switcher" role="group" aria-label="Workspace level">
+        <button type="button" data-workspace-level="beginner" aria-pressed="true">
+          Beginner <small>초급</small>
         </button>
+        <button type="button" data-workspace-level="builder" aria-pressed="false">
+          Builder <small>중급</small>
+        </button>
+        <button type="button" data-workspace-level="advanced" aria-pressed="false">
+          Advanced <small>고급</small>
+        </button>
+        <button type="button" data-workspace-level="expert" aria-pressed="false">
+          Expert <small>최고급</small>
+        </button>
+      </div>
+      <div class="workspace-actions">
+        <button id="undo-action" class="tool-button" type="button" disabled title="Undo">
+          ↶ <span>Undo</span>
+        </button>
+        <button id="redo-action" class="tool-button" type="button" disabled title="Redo">
+          ↷ <span>Redo</span>
+        </button>
+        <button id="play-toggle" class="tool-button active" type="button" aria-pressed="true">
+          <span aria-hidden="true">Ⅱ</span> <span>Pause motion</span>
+        </button>
+        <button id="reset-scene" class="tool-button danger-quiet" type="button">Reset scene</button>
+      </div>
+    </div>
+
+    <main id="main" class="studio-workspace" data-level="beginner">
+      <aside class="studio-panel scene-panel" aria-label="Scene and learning tools">
+        <section class="level-guide" aria-labelledby="level-title">
+          <p class="panel-kicker">Learning level</p>
+          <h1 id="level-title">Start with direct edits</h1>
+          <p id="workspace-mode-desc">
+            Select an object, change one value, then try the same edit in natural language.
+          </p>
+          <div
+            class="guide-progress"
+            role="progressbar"
+            aria-label="Beginner task progress"
+            aria-valuemin="0"
+            aria-valuemax="4"
+            aria-valuenow="0"
+          >
+            <span id="guide-progress-bar"></span>
+          </div>
+          <ol class="guide-steps" id="guide-steps">
+            <li data-guide-step="select">Select a scene object</li>
+            <li data-guide-step="transform">Edit a transform value</li>
+            <li data-guide-step="command">Run a safe natural-language command</li>
+            <li data-guide-step="level">Open the Builder level</li>
+          </ol>
+        </section>
+
+        <section class="panel-section" aria-labelledby="outliner-title">
+          <div class="panel-heading">
+            <div>
+              <p class="panel-kicker">Hierarchy</p>
+              <h2 id="outliner-title">Scene objects</h2>
+            </div>
+            <output id="object-count" aria-label="Object count">0</output>
+          </div>
+          <label class="search-field" for="object-search">
+            <span>Filter objects</span>
+            <input id="object-search" type="search" placeholder="Name or type" autocomplete="off" />
+          </label>
+          <ul class="scene-tree" id="scene-tree" aria-label="Scene hierarchy"></ul>
+          <p class="empty-state" id="scene-empty" hidden>
+            No objects match this filter. Clear the search or add a primitive.
+          </p>
+        </section>
+
+        <section
+          class="panel-section"
+          data-min-level="builder"
+          aria-labelledby="create-title"
+          hidden
+        >
+          <div class="panel-heading">
+            <div>
+              <p class="panel-kicker">Create</p>
+              <h2 id="create-title">Add primitive</h2>
+            </div>
+          </div>
+          <div class="primitive-grid">
+            <button type="button" data-add-primitive="box">
+              <span aria-hidden="true">□</span> Box
+            </button>
+            <button type="button" data-add-primitive="sphere">
+              <span aria-hidden="true">○</span> Sphere
+            </button>
+            <button type="button" data-add-primitive="plane">
+              <span aria-hidden="true">◇</span> Plane
+            </button>
+            <button type="button" data-add-primitive="group">
+              <span aria-hidden="true">⌘</span> Group
+            </button>
+          </div>
+        </section>
+
+        <section
+          class="panel-section"
+          data-min-level="advanced"
+          aria-labelledby="preset-title"
+          hidden
+        >
+          <div class="panel-heading">
+            <div>
+              <p class="panel-kicker">Scenario</p>
+              <h2 id="preset-title">Scene presets</h2>
+            </div>
+          </div>
+          <label for="scene-preset">
+            Preset
+            <select id="scene-preset">
+              <option value="starter">Starter composition</option>
+              <option value="gallery">Material gallery</option>
+              <option value="hierarchy">Orbital hierarchy</option>
+              <option value="performance">25-object stress grid</option>
+            </select>
+          </label>
+          <button id="apply-preset" class="secondary full-width" type="button">Load preset</button>
+        </section>
+      </aside>
+
+      <section class="viewport-column" aria-labelledby="stage-title">
+        <h2 id="stage-title" class="visually-hidden">Interactive 3D viewport</h2>
+        <div class="viewport-toolbar" aria-label="Viewport controls">
+          <div class="tool-group" role="group" aria-label="Camera views">
+            <button class="tool-button" type="button" data-camera-view="iso">Perspective</button>
+            <button class="tool-button" type="button" data-camera-view="front">Front</button>
+            <button class="tool-button" type="button" data-camera-view="top">Top</button>
+            <button class="tool-button" id="frame-selection" type="button">Frame selected</button>
+          </div>
+          <label class="toggle-control">
+            <input id="viewport-guides" type="checkbox" checked />
+            <span>Guides</span>
+          </label>
+        </div>
+        <div class="canvas-shell studio-canvas-shell">
+          <canvas id="playground-canvas" aria-label="Interactive Verbis3D multi-object scene">
+            Your browser does not support canvas.
+          </canvas>
+          <div class="viewport-guides" id="viewport-guide-overlay" aria-hidden="true">
+            <span class="axis-label axis-x">X</span>
+            <span class="axis-label axis-y">Y</span>
+            <span class="axis-label axis-z">Z</span>
+            <span class="viewport-crosshair"></span>
+          </div>
+          <div class="selection-chip" id="viewport-selection">
+            <span class="status-dot"></span>
+            <span><small>Selected</small><strong>cube</strong></span>
+          </div>
+          <dl class="viewport-stats" aria-label="Live renderer diagnostics">
+            <div>
+              <dt>FPS</dt>
+              <dd id="stat-fps">—</dd>
+            </div>
+            <div>
+              <dt>Draws</dt>
+              <dd id="stat-draws">0</dd>
+            </div>
+            <div>
+              <dt>Objects</dt>
+              <dd id="stat-objects">0</dd>
+            </div>
+            <div>
+              <dt>WebGL</dt>
+              <dd id="stat-webgl">Starting</dd>
+            </div>
+          </dl>
+        </div>
+
+        <section class="command-dock" aria-labelledby="command-dock-title">
+          <div class="dock-tabs" role="tablist" aria-label="Command workspace">
+            <button
+              id="command-tab"
+              type="button"
+              role="tab"
+              aria-selected="true"
+              aria-controls="command-panel"
+              data-dock-tab="command"
+            >
+              Natural language
+            </button>
+            <button
+              id="history-tab"
+              type="button"
+              role="tab"
+              aria-selected="false"
+              aria-controls="history-panel"
+              data-dock-tab="history"
+            >
+              Activity
+              <span id="activity-count">0</span>
+            </button>
+            <button
+              id="expert-tab"
+              type="button"
+              role="tab"
+              aria-selected="false"
+              aria-controls="expert-panel"
+              data-dock-tab="expert"
+              data-min-level="expert"
+              hidden
+            >
+              Structured command
+            </button>
+          </div>
+
+          <div id="command-panel" class="dock-panel" role="tabpanel" aria-labelledby="command-tab">
+            <div class="command-intro">
+              <div>
+                <p class="panel-kicker">Validated offline provider</p>
+                <h2 id="command-dock-title">Describe the change you want</h2>
+              </div>
+              <label class="toggle-control">
+                <input id="natural-dry-run" type="checkbox" />
+                <span>Dry run</span>
+              </label>
+            </div>
+            <form class="command-form" id="command-form">
+              <label for="natural-command">Natural-language command</label>
+              <div class="command-entry">
+                <input
+                  id="natural-command"
+                  value="큐브를 오른쪽으로 2 이동"
+                  autocomplete="off"
+                  aria-describedby="command-help"
+                />
+                <button type="submit">Validate and run</button>
+              </div>
+            </form>
+            <div class="command-suggestions" id="command-help" aria-label="Command examples">
+              <button type="button" data-command-example="큐브를 오른쪽으로 1 이동">
+                Move right
+              </button>
+              <button type="button" data-command-example="큐브를 45도 회전">Rotate 45°</button>
+              <button type="button" data-command-example="sphere up 1">Lift sphere</button>
+              <button type="button" data-command-example="cube hide">Hide cube</button>
+            </div>
+            <p class="result" id="command-result" role="status">
+              Commands are parsed into a schema and validated before execution.
+            </p>
+            <details class="command-preview">
+              <summary>Inspect generated EngineCommand data</summary>
+              <pre id="natural-command-preview"><code>[]</code></pre>
+            </details>
+          </div>
+
+          <div
+            id="history-panel"
+            class="dock-panel"
+            role="tabpanel"
+            aria-labelledby="history-tab"
+            hidden
+          >
+            <div class="activity-heading">
+              <div>
+                <p class="panel-kicker">Session log</p>
+                <h2>Recent activity</h2>
+              </div>
+              <button id="clear-activity" class="secondary compact" type="button">Clear log</button>
+            </div>
+            <ol class="activity-log" id="activity-log">
+              <li class="empty-state">Actions, validation results and errors will appear here.</li>
+            </ol>
+          </div>
+
+          <div
+            id="expert-panel"
+            class="dock-panel expert-command-panel"
+            role="tabpanel"
+            aria-labelledby="expert-tab"
+            hidden
+          >
+            <div>
+              <label for="command-preset">
+                Command template
+                <select id="command-preset">
+                  <option value="move">Move selected object</option>
+                  <option value="rotate">Rotate selected object</option>
+                  <option value="create">Create sphere</option>
+                  <option value="color">Set material color</option>
+                  <option value="duplicate">Duplicate selected object</option>
+                </select>
+              </label>
+              <label for="structured-command">
+                EngineCommand JSON
+                <textarea id="structured-command" rows="11" spellcheck="false"></textarea>
+              </label>
+              <div class="inline-actions">
+                <label class="toggle-control">
+                  <input id="structured-dry-run" type="checkbox" checked />
+                  <span>Dry run first</span>
+                </label>
+                <button id="run-structured-command" type="button">Validate command</button>
+              </div>
+            </div>
+            <div>
+              <p class="panel-kicker">CommandResult</p>
+              <pre id="structured-result" aria-live="polite"><code>{
+  "status": "Ready"
+}</code></pre>
+              <p class="security-note">
+                JSON is parsed as data. This editor never uses <code>eval</code> or executes
+                generated JavaScript.
+              </p>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <aside class="studio-panel inspector" aria-label="Object and scene inspector">
+        <div class="selection-heading">
+          <div>
+            <p class="panel-kicker">Selection</p>
+            <h2 id="selected-name">cube</h2>
+            <p id="selected-type">Mesh · BoxGeometry</p>
+          </div>
+          <div class="selection-actions" data-min-level="builder" hidden>
+            <button id="duplicate-object" class="icon-button" type="button" title="Duplicate">
+              <span aria-hidden="true">⧉</span><span class="visually-hidden">Duplicate object</span>
+            </button>
+            <button
+              id="delete-object"
+              class="icon-button danger-quiet"
+              type="button"
+              title="Delete"
+            >
+              <span aria-hidden="true">×</span><span class="visually-hidden">Delete object</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="inspector-tabs" role="tablist" aria-label="Inspector sections">
+          <button
+            id="object-tab"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            aria-controls="object-panel"
+            data-inspector-tab="object"
+          >
+            Object
+          </button>
+          <button
+            id="motion-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="motion-panel"
+            data-inspector-tab="motion"
+            data-min-level="advanced"
+            hidden
+          >
+            Motion
+          </button>
+          <button
+            id="scene-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="scene-panel"
+            data-inspector-tab="scene"
+            data-min-level="advanced"
+            hidden
+          >
+            Scene
+          </button>
+        </div>
+
+        <div id="object-panel" class="inspector-panel" role="tabpanel" aria-labelledby="object-tab">
+          <fieldset class="property-group">
+            <legend>Identity</legend>
+            <label for="object-name"
+              >Name
+              <input id="object-name" autocomplete="off" />
+            </label>
+            <div class="toggle-grid">
+              <label class="toggle-control"
+                ><input id="object-visible" type="checkbox" checked /><span>Visible</span></label
+              >
+              <label class="toggle-control"
+                ><input id="object-enabled" type="checkbox" checked /><span>Enabled</span></label
+              >
+            </div>
+            <label for="object-parent" data-min-level="builder" hidden
+              >Parent
+              <select id="object-parent"></select>
+            </label>
+          </fieldset>
+
+          <fieldset class="property-group">
+            <legend>Transform</legend>
+            <button id="reset-transform" class="text-button legend-action" type="button">
+              Reset
+            </button>
+            <div class="property-row">
+              <span>Position</span>
+              <div class="field-grid">
+                <label>X<input id="position-x" type="number" step="0.1" /></label>
+                <label>Y<input id="position-y" type="number" step="0.1" /></label>
+                <label>Z<input id="position-z" type="number" step="0.1" /></label>
+              </div>
+            </div>
+            <div class="property-row">
+              <span>Rotation °</span>
+              <div class="field-grid">
+                <label>X<input id="rotation-x" type="number" step="1" /></label>
+                <label>Y<input id="rotation-y" type="number" step="1" /></label>
+                <label>Z<input id="rotation-z" type="number" step="1" /></label>
+              </div>
+            </div>
+            <div class="property-row">
+              <span>Scale</span>
+              <div class="field-grid">
+                <label>X<input id="scale-x" type="number" min="0.01" step="0.1" /></label>
+                <label>Y<input id="scale-y" type="number" min="0.01" step="0.1" /></label>
+                <label>Z<input id="scale-z" type="number" min="0.01" step="0.1" /></label>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="property-group" id="material-properties">
+            <legend>Material</legend>
+            <div class="material-row">
+              <label for="object-color"
+                >Color<input id="object-color" type="color" value="#33b3ff"
+              /></label>
+              <label for="object-opacity"
+                >Opacity
+                <output id="opacity-value">100%</output>
+                <input id="object-opacity" type="range" min="0.1" max="1" step="0.05" value="1" />
+              </label>
+            </div>
+            <div data-min-level="builder" hidden>
+              <label for="material-side"
+                >Rendered side
+                <select id="material-side">
+                  <option value="front">Front</option>
+                  <option value="back">Back</option>
+                  <option value="double">Double</option>
+                </select>
+              </label>
+              <div class="toggle-grid">
+                <label class="toggle-control"
+                  ><input id="material-depth-test" type="checkbox" checked /><span
+                    >Depth test</span
+                  ></label
+                >
+                <label class="toggle-control"
+                  ><input id="material-depth-write" type="checkbox" checked /><span
+                    >Depth write</span
+                  ></label
+                >
+              </div>
+            </div>
+          </fieldset>
+
+          <dl class="geometry-summary" id="geometry-summary">
+            <div>
+              <dt>Geometry</dt>
+              <dd id="geometry-name">BoxGeometry</dd>
+            </div>
+            <div>
+              <dt>Vertices</dt>
+              <dd id="geometry-vertices">24</dd>
+            </div>
+            <div>
+              <dt>Indices</dt>
+              <dd id="geometry-indices">36</dd>
+            </div>
+            <div>
+              <dt>Object ID</dt>
+              <dd id="object-id">—</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div
+          id="motion-panel"
+          class="inspector-panel"
+          role="tabpanel"
+          aria-labelledby="motion-tab"
+          hidden
+        >
+          <fieldset class="property-group">
+            <legend>Procedural motion</legend>
+            <label for="motion-type"
+              >Motion
+              <select id="motion-type">
+                <option value="none">None</option>
+                <option value="spin">Spin around Y</option>
+                <option value="bob">Vertical bob</option>
+                <option value="orbit">Orbit origin</option>
+              </select>
+            </label>
+            <label for="motion-speed"
+              >Speed <output id="motion-speed-value">1.0×</output>
+              <input id="motion-speed" type="range" min="0.1" max="3" step="0.1" value="1" />
+            </label>
+            <label for="motion-amplitude"
+              >Amplitude <output id="motion-amplitude-value">1.0</output>
+              <input id="motion-amplitude" type="range" min="0.1" max="4" step="0.1" value="1" />
+            </label>
+            <button id="apply-motion" type="button">Apply motion</button>
+          </fieldset>
+          <fieldset class="property-group">
+            <legend>Timeline preview</legend>
+            <label for="timeline-scrubber"
+              >Playhead <output id="timeline-value">0.0 s</output>
+              <input id="timeline-scrubber" type="range" min="0" max="10" step="0.1" value="0" />
+            </label>
+            <p class="field-help">
+              Motion metadata is stored in <code>object.userData</code> and survives JSON export.
+            </p>
+          </fieldset>
+        </div>
+
+        <div
+          id="scene-panel"
+          class="inspector-panel"
+          role="tabpanel"
+          aria-labelledby="scene-tab"
+          hidden
+        >
+          <fieldset class="property-group">
+            <legend>Environment</legend>
+            <label for="scene-background"
+              >Background<input id="scene-background" type="color" value="#071018"
+            /></label>
+            <label for="camera-fov"
+              >Camera field of view
+              <output id="camera-fov-value">55°</output>
+              <input id="camera-fov" type="range" min="25" max="100" step="1" value="55" />
+            </label>
+            <label class="toggle-control"
+              ><input id="camera-orbit" type="checkbox" /><span
+                >Orbit camera while motion plays</span
+              ></label
+            >
+          </fieldset>
+
+          <fieldset class="property-group" data-min-level="expert" hidden>
+            <legend>Scene JSON</legend>
+            <label for="scene-json"
+              >Serialized scene
+              <textarea id="scene-json" rows="13" spellcheck="false"></textarea>
+            </label>
+            <div class="inline-actions">
+              <button id="export-scene" class="secondary" type="button">Refresh JSON</button>
+              <button id="import-scene" type="button">Apply JSON</button>
+            </div>
+            <p class="field-help" id="scene-json-result" role="status">
+              Exported data contains transforms, hierarchy, colors and motion metadata.
+            </p>
+          </fieldset>
+        </div>
       </aside>
     </main>
+
     <script type="module" src="./scripts/site.js"></script>
     <script type="module" src="./scripts/playground.js"></script>
   </body>

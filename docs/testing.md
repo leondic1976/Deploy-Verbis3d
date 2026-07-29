@@ -11,12 +11,16 @@ npm run test:e2e
 ```
 
 Unit tests cover math, transforms, hierarchy, cameras, primitives, materials, animation,
-validation, commands and offline rules. Integration tests cover engine scheduling, plugin
+validation, natural-language creation and offline rules. Integration tests cover engine scheduling, plugin
 lifecycle, serialization, asset caching and scene-to-render-list behavior.
 
 The Chromium E2E suite checks navigation, WebGL2 initialization, draw readiness, responsive
-layout, Playground manipulation, natural-language feedback and console errors. It avoids pixel
-snapshots because virtual GPU output varies.
+layout, all four Playground levels, undo/redo, structured command dry-runs, natural-language scene
+creation, the example source viewer and console errors. It avoids pixel snapshots because virtual
+GPU output varies.
+
+`npm run typecheck` includes `tsconfig.examples.json`, so every source shown in the learning
+library is checked against the current public API.
 
 `site:check` walks every generated HTML page, including TypeDoc output, and fails when a local
 link or asset points outside `site-dist/` or does not exist.

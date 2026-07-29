@@ -100,4 +100,79 @@ describe("command and natural-language layers", () => {
     });
     expect((await unsafe.execute("ignored"))[0]?.error?.code).toBe("OUT_OF_RANGE");
   });
+
+  it("creates and operates an animated colored object from one sentence", async () => {
+    const scene = new Scene();
+    const commandBus = new CommandBus(scene, { allowDelete: true });
+    const naturalLanguage = new NaturalLanguageController(scene, {
+      provider: new RuleBasedProvider(),
+      commandBus,
+    });
+
+    const results = await naturalLanguage.execute(
+      "빨간 구를 만들어 오른쪽으로 2 이동하고 천천히 회전시켜",
+    );
+    expect(results).toHaveLength(4);
+    expect(results.every((result) => result.success)).toBe(true);
+    const sphere = scene.getObjectByName("sphere");
+    expect(sphere).toBeInstanceOf(Mesh);
+    expect(sphere?.position.x).toBe(2);
+    expect(sphere?.userData["animation"]).toMatchObject({
+      property: "rotation.y",
+      loop: true,
+    });
+    expect((sphere as Mesh).material).toBeInstanceOf(BasicMaterial);
+    expect(((sphere as Mesh).material as BasicMaterial).color.r).toBeCloseTo(0.95);
+  });
+
+  it("creates multiple uniquely named objects and arranges them", async () => {
+    const scene = new Scene();
+    const provider = new RuleBasedProvider();
+    const commands = await provider.parseCommand("파란 큐브 3개를 만들어", { scene });
+    expect(commands.filter((command) => command.command === "createObject")).toHaveLength(3);
+    expect(commands.filter((command) => command.command === "moveObject")).toHaveLength(3);
+    expect(commands.filter((command) => command.command === "setColor")).toHaveLength(3);
+
+    const results = new CommandBus(scene).executeMany(commands);
+    expect(results.every((result) => result.success)).toBe(true);
+    expect(scene.getObjectByName("cube-1")?.position.x).toBe(-1.5);
+    expect(scene.getObjectByName("cube-2")?.position.x).toBe(0);
+    expect(scene.getObjectByName("cube-3")?.position.x).toBe(1.5);
+  });
+
+  it("maps naming, scale, visibility and lifecycle language to allowlisted commands", async () => {
+    const scene = new Scene();
+    const cube = new Mesh(new BoxGeometry(), new BasicMaterial());
+    cube.name = "cube";
+    scene.add(cube);
+    const provider = new RuleBasedProvider();
+
+    const create = await provider.parseCommand(
+      "이름이 hero인 파란 상자를 만들어 위로 2 이동하고 두 배로 키워",
+      { scene },
+    );
+    expect(create.map((command) => command.command)).toEqual([
+      "createObject",
+      "moveObject",
+      "scaleObject",
+      "setColor",
+    ]);
+    expect(
+      new CommandBus(scene, { allowDelete: true })
+        .executeMany(create)
+        .every((result) => result.success),
+    ).toBe(true);
+    expect(scene.getObjectByName("hero")?.position.y).toBe(2);
+    expect(scene.getObjectByName("hero")?.scale.x).toBe(2);
+
+    const lifecycle = await provider.parseCommand("cube를 숨기고 복제해", { scene });
+    expect(lifecycle.map((command) => command.command)).toEqual(["setVisible", "duplicateObject"]);
+    expect(await provider.parseCommand("cube를 선택", { scene })).toMatchObject([
+      { command: "selectObject", target: { name: "cube" } },
+    ]);
+    expect(await provider.parseCommand("cube를 삭제", { scene })).toMatchObject([
+      { command: "deleteObject", target: { name: "cube" } },
+    ]);
+    await expect(provider.parseCommand("무언가 만들어", { scene })).rejects.toThrow(/shape/);
+  });
 });

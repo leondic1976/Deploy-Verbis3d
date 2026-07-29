@@ -33,6 +33,7 @@
         <a href="#math">Math</a><a href="#scene-graph">Scene graph</a><a href="#camera">Camera</a
         ><a href="#renderer">Renderer</a><a href="#geometry">Geometry</a
         ><a href="#animation">Animation</a><a href="#commands">Commands & AI</a
+        ><a href="#playground">Progressive Playground</a
         ><a href="#plugins-assets">Plugins & assets</a><a href="#testing">Testing</a
         ><a href="./api/index.html">API reference</a>
       </aside>
@@ -124,6 +125,25 @@ await controller.execute("큐브를 오른쪽으로 2 이동");</code></pre>
             Provider output always passes the runtime validator and command bus. Deletion is
             permission-gated; ambiguous names stop execution; dry-run is supported.
           </p>
+          <pre><code>await controller.execute(
+  "빨간 구를 만들어 오른쪽으로 2 이동하고 천천히 회전시켜"
+);</code></pre>
+          <p>
+            The offline grammar can create box, sphere and plane objects, then chain movement,
+            rotation, motion, scale, color, visibility, duplicate or delete operations.
+          </p>
+        </section>
+        <section id="playground">
+          <h2>Progressive Playground</h2>
+          <p>
+            Scene Lab exposes Beginner, Builder, Advanced and Expert levels without replacing the
+            active scene. It combines multi-object hierarchy editing, material state, motion, camera
+            controls, undo/redo, structured command dry-runs and scene JSON.
+          </p>
+          <div class="actions">
+            <a class="button" href="./playground.html">Open Scene Lab</a>
+            <a class="button secondary" href="./examples.html">Browse 16 source examples</a>
+          </div>
         </section>
         <section id="plugins-assets">
           <h2>Plugins & assets</h2>
@@ -142,7 +162,9 @@ npm run typecheck
 npm run test
 npm run test:coverage
 npm run build
+npm run site:check
 npm run test:e2e</code></pre>
+          <p>Type checking includes every source displayed in the Examples learning library.</p>
         </section>
       </article>
     </main>

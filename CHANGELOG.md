@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Progressive Beginner, Builder, Advanced and Expert Playground workspaces
+- Natural-language scene creation, multi-object recipes and structured command previews
+- Scene hierarchy editing, undo/redo, motion controls, diagnostics and safe JSON round-trip
+- Sixteen filterable and CI-typechecked learning examples with complete source viewing
+
+### Changed
+
+- Expanded the offline Korean/English rule provider across creation, transforms, appearance,
+  visibility, duplication, deletion and motion
+- Kept Euler and quaternion rotation views synchronized after command-driven changes
+
 ## 0.1.0-alpha.1
 
 ### Added

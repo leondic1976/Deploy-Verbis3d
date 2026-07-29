@@ -56,6 +56,39 @@
           <p class="webgl-message" id="webgl-message" role="status">Starting WebGL2 renderer…</p>
         </div>
       </section>
+      <section class="section natural-home-section">
+        <div class="container">
+          <div class="section-heading">
+            <h2>Create and operate scenes in natural language.</h2>
+            <p>
+              A deterministic provider turns Korean or English intent into inspectable command data.
+              The validator and command bus remain the only path to scene mutation.
+            </p>
+          </div>
+          <div class="natural-command-flow">
+            <article>
+              <span>01 · Intent</span>
+              <code>빨간 구를 만들어 오른쪽으로 2 이동하고 천천히 회전시켜</code>
+            </article>
+            <article>
+              <span>02 · Validated data</span>
+              <code>createObject → moveObject → animateObject → setColor</code>
+            </article>
+            <article>
+              <span>03 · Engine result</span>
+              <p>A new red sphere is created, positioned and given persistent spin metadata.</p>
+            </article>
+          </div>
+          <div class="actions">
+            <a
+              class="button"
+              href="./playground.html?level=beginner&amp;command=%EB%B9%A8%EA%B0%84%20%EA%B5%AC%EB%A5%BC%20%EB%A7%8C%EB%93%A4%EC%96%B4%20%EC%98%A4%EB%A5%B8%EC%AA%BD%EC%9C%BC%EB%A1%9C%202%20%EC%9D%B4%EB%8F%99%ED%95%98%EA%B3%A0%20%EC%B2%9C%EC%B2%9C%ED%9E%88%20%ED%9A%8C%EC%A0%84%EC%8B%9C%EC%BC%9C"
+              >Run this instruction</a
+            >
+            <a class="button secondary" href="./examples.html">Study command examples</a>
+          </div>
+        </div>
+      </section>
       <section class="section">
         <div class="container">
           <div class="section-heading">
