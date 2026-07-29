@@ -16,6 +16,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    "verbatimModuleSyntax": true,
     "useDefineForClassFields": true,
     "skipLibCheck": true
   },

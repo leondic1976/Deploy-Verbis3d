@@ -1,0 +1,14 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "out": "site/api",
+  "name": "Verbis3D API",
+  "readme": "docs/getting-started.md",
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "navigationLinks": {
+    "Documentation": "/Deploy-Verbis3d/docs.html",
+    "Playground": "/Deploy-Verbis3d/playground.html",
+    "GitHub": "https://github.com/leondic1976/Deploy-Verbis3d"
+  }
+}

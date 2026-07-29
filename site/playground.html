@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Playground · Verbis3D</title>
+    <link rel="stylesheet" href="./styles/main.css" />
+  </head>
+  <body data-page="playground">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="./index.html">Verbis<span>3D</span></a
+        ><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+          Menu
+        </button>
+        <nav class="site-nav" id="site-nav" aria-label="Primary">
+          <a data-page="home" href="./index.html">Home</a
+          ><a data-page="docs" href="./docs.html">Docs</a
+          ><a data-page="examples" href="./examples.html">Examples</a
+          ><a data-page="playground" href="./playground.html">Playground</a
+          ><a data-page="architecture" href="./architecture.html">Architecture</a
+          ><a data-page="roadmap" href="./roadmap.html">Roadmap</a><a href="./api/index.html">API</a
+          ><a href="https://github.com/leondic1976/Deploy-Verbis3d">GitHub</a>
+        </nav>
+      </div>
+    </header>
+    <main id="main" class="playground-layout">
+      <section class="playground-stage" aria-labelledby="stage-title">
+        <h1 id="stage-title" style="position: absolute; left: -9999px">3D scene</h1>
+        <div class="canvas-shell">
+          <canvas id="playground-canvas" aria-label="Interactive Verbis3D cube scene"
+            >Your browser does not support canvas.</canvas
+          >
+        </div>
+      </section>
+      <aside class="inspector" aria-label="Scene inspector">
+        <p class="eyebrow">Offline playground</p>
+        <h2>Scene inspector</h2>
+        <ul class="object-list" aria-label="Scene objects">
+          <li>
+            <button type="button" aria-pressed="true">▣ cube <small>Mesh</small></button>
+          </li>
+        </ul>
+        <fieldset>
+          <legend>Position</legend>
+          <div class="field-grid">
+            <label>X<input id="position-x" type="number" step="0.1" /></label
+            ><label>Y<input id="position-y" type="number" step="0.1" /></label
+            ><label>Z<input id="position-z" type="number" step="0.1" /></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Rotation (degrees)</legend>
+          <div class="field-grid">
+            <label>X<input id="rotation-x" type="number" step="1" /></label
+            ><label>Y<input id="rotation-y" type="number" step="1" /></label
+            ><label>Z<input id="rotation-z" type="number" step="1" /></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Scale</legend>
+          <div class="field-grid">
+            <label>X<input id="scale-x" type="number" min="0.01" step="0.1" /></label
+            ><label>Y<input id="scale-y" type="number" min="0.01" step="0.1" /></label
+            ><label>Z<input id="scale-z" type="number" min="0.01" step="0.1" /></label>
+          </div>
+          <label style="margin-top: 0.75rem"
+            >Color<input id="object-color" type="color" value="#33b3ff"
+          /></label>
+        </fieldset>
+        <form class="command-form" id="command-form">
+          <label for="natural-command">Natural-language command</label
+          ><input id="natural-command" value="큐브를 오른쪽으로 2 이동" autocomplete="off" /><button
+            type="submit"
+          >
+            Validate and run
+          </button>
+        </form>
+        <p class="result" id="command-result" role="status">
+          Try: 큐브를 45도 회전 / 큐브를 숨겨 / cube up 1
+        </p>
+        <button class="button secondary" id="reset-scene" type="button" style="width: 100%">
+          Reset scene
+        </button>
+      </aside>
+    </main>
+    <script type="module" src="./scripts/site.js"></script>
+    <script type="module" src="./scripts/playground.js"></script>
+  </body>
+</html>

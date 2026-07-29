@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Verbis3D is an AI-native WebGL2 engine written directly in TypeScript."
+    />
+    <title>Verbis3D · AI-native WebGL2 engine</title>
+    <link rel="stylesheet" href="./styles/main.css" />
+  </head>
+  <body data-page="home">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="./index.html">Verbis<span>3D</span></a>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+          Menu
+        </button>
+        <nav class="site-nav" id="site-nav" aria-label="Primary">
+          <a data-page="home" href="./index.html">Home</a>
+          <a data-page="docs" href="./docs.html">Docs</a>
+          <a data-page="examples" href="./examples.html">Examples</a>
+          <a data-page="playground" href="./playground.html">Playground</a>
+          <a data-page="architecture" href="./architecture.html">Architecture</a>
+          <a data-page="roadmap" href="./roadmap.html">Roadmap</a>
+          <a href="./api/index.html">API</a>
+          <a href="https://github.com/leondic1976/Deploy-Verbis3d">GitHub</a>
+        </nav>
+      </div>
+    </header>
+    <main id="main">
+      <section class="hero container">
+        <div>
+          <p class="eyebrow">TypeScript · WebGL2 · structured AI commands</p>
+          <h1>Build 3D for the web without a hidden engine.</h1>
+          <p class="lead">
+            Verbis3D is an early-stage, independent 3D engine. Its math, scene graph, renderer,
+            animation foundation and command safety layer are implemented directly, with no Three.js
+            or other complete engine underneath.
+          </p>
+          <div class="actions">
+            <a class="button" href="./docs.html#get-started">Start building</a>
+            <a class="button secondary" href="./playground.html">Open playground</a>
+          </div>
+        </div>
+        <div class="demo-shell">
+          <canvas
+            id="engine-demo"
+            aria-label="Rotating teal cube rendered by the Verbis3D WebGL2 backend"
+          >
+            Your browser does not support the canvas element.
+          </canvas>
+          <span class="demo-badge">Live engine output</span>
+          <p class="webgl-message" id="webgl-message" role="status">Starting WebGL2 renderer…</p>
+        </div>
+      </section>
+      <section class="section">
+        <div class="container">
+          <div class="section-heading">
+            <h2>One public API, explicit layers.</h2>
+            <p>
+              Code and natural language converge on the same validated engine operations. AI output
+              is data—not executable JavaScript.
+            </p>
+          </div>
+          <div class="feature-grid">
+            <article class="feature">
+              <strong>Engine-owned foundations</strong>
+              <p>Column-major math, scene graph, cameras, geometry, materials and frame loop.</p>
+            </article>
+            <article class="feature">
+              <strong>WebGL2 backend</strong>
+              <p>Shader, buffer, VAO, render-state and resource lifecycle management.</p>
+            </article>
+            <article class="feature">
+              <strong>Safe command path</strong>
+              <p>
+                Provider adapters emit schemas checked for command, target, range and permission.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+      <section class="section">
+        <div class="container">
+          <div class="section-heading">
+            <h2>Small enough to read. Complete enough to run.</h2>
+            <p>
+              The alpha API renders an indexed cube and supports offline Korean/English commands.
+            </p>
+          </div>
+          <pre><code>const renderer = new WebGL2Renderer({ canvas });
+const scene = new Scene();
+const camera = new PerspectiveCamera(60, width / height, 0.1, 100);
+const cube = new Mesh(
+  new BoxGeometry(),
+  new BasicMaterial({ color: [0.2, 0.7, 1, 1] })
+);
+scene.add(cube);
+new Engine({ renderer, scene, camera }).start();</code></pre>
+        </div>
+      </section>
+      <section class="section">
+        <div class="container">
+          <div class="section-heading">
+            <h2>Current development stage</h2>
+            <p>Version 0.1.0-alpha.1. Implemented features are separated from later work.</p>
+          </div>
+          <div class="status-grid">
+            <article class="status-item complete">
+              <strong>Implemented</strong>
+              <p>
+                Math, scene graph, camera, primitives, basic WebGL2 renderer, tests and static
+                playground.
+              </p>
+            </article>
+            <article class="status-item complete">
+              <strong>Validated path</strong>
+              <p>
+                Structured commands, dry-run, history, rule-based natural language and JSON scene
+                round-trip.
+              </p>
+            </article>
+            <article class="status-item foundation">
+              <strong>Foundation only</strong>
+              <p>
+                Animation, textures, plugins and external AI adapters need production expansion.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span>Verbis3D 0.1.0-alpha.1</span><span>MIT licensed · experimental API</span>
+      </div>
+    </footer>
+    <script type="module" src="./scripts/site.js"></script>
+    <script type="module" src="./scripts/demo.js"></script>
+  </body>
+</html>

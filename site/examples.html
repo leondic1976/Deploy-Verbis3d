@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Examples · Verbis3D</title>
+    <link rel="stylesheet" href="./styles/main.css" />
+  </head>
+  <body data-page="examples">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="./index.html">Verbis<span>3D</span></a
+        ><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+          Menu
+        </button>
+        <nav class="site-nav" id="site-nav" aria-label="Primary">
+          <a data-page="home" href="./index.html">Home</a
+          ><a data-page="docs" href="./docs.html">Docs</a
+          ><a data-page="examples" href="./examples.html">Examples</a
+          ><a data-page="playground" href="./playground.html">Playground</a
+          ><a data-page="architecture" href="./architecture.html">Architecture</a
+          ><a data-page="roadmap" href="./roadmap.html">Roadmap</a><a href="./api/index.html">API</a
+          ><a href="https://github.com/leondic1976/Deploy-Verbis3d">GitHub</a>
+        </nav>
+      </div>
+    </header>
+    <main id="main" class="container section">
+      <p class="eyebrow">Examples</p>
+      <h1>Trace a feature from API to output.</h1>
+      <p class="lead">
+        Each repository example is deliberately narrow and uses no complete third-party 3D engine.
+      </p>
+      <div class="example-grid">
+        <article class="example">
+          <h2>Basic cube</h2>
+          <p>Camera, indexed geometry, material, renderer and resize handling.</p>
+          <a href="https://github.com/leondic1976/Deploy-Verbis3d/tree/main/examples/basic-cube"
+            >View source</a
+          >
+        </article>
+        <article class="example">
+          <h2>Scene graph</h2>
+          <p>Parent-child transforms, traversal and cycle rejection.</p>
+          <a href="https://github.com/leondic1976/Deploy-Verbis3d/tree/main/examples/scene-graph"
+            >View source</a
+          >
+        </article>
+        <article class="example">
+          <h2>Animation</h2>
+          <p>Vector keyframes and action playback through a mixer.</p>
+          <a href="https://github.com/leondic1976/Deploy-Verbis3d/tree/main/examples/animation"
+            >View source</a
+          >
+        </article>
+        <article class="example">
+          <h2>Natural language</h2>
+          <p>Offline rules to validated commands with no external server.</p>
+          <a href="./playground.html">Try it</a>
+        </article>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span>Verbis3D examples</span><a href="./docs.html">Read the docs</a>
+      </div>
+    </footer>
+    <script type="module" src="./scripts/site.js"></script>
+  </body>
+</html>

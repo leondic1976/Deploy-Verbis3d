@@ -1,3 +1,13 @@
+export { Box3 } from "./Box3.js";
+export { Color } from "./Color.js";
+export { Euler } from "./Euler.js";
+export { Frustum } from "./Frustum.js";
+export { Matrix3 } from "./Matrix3.js";
 export { Matrix4 } from "./Matrix4.js";
+export { Plane } from "./Plane.js";
 export { Quaternion } from "./Quaternion.js";
-export { Vector3 } from "./Vector3.js";
+export { Ray } from "./Ray.js";
+export { Sphere } from "./Sphere.js";
+export { Vector2 } from "./Vector2.js";
+export { EPSILON, Vector3 } from "./Vector3.js";
+export { Vector4 } from "./Vector4.js";
