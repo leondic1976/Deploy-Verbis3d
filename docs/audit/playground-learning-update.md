@@ -15,10 +15,13 @@ Audit scope: progressive Playground, natural-language creation and study example
 | Examples           | four narrow files/cards               | 16 categorized, filterable, CI-typechecked sources                                         |
 | Rotation state     | Euler did not follow quaternion edits | two-way Euler/quaternion synchronization                                                   |
 | Browser coverage   | basic transform and one command       | all levels, undo/redo, creation recipe, source viewer and mobile overflow                  |
+| Viewport input     | hierarchy-only selection              | ray picking, selected marker, orbit, pan, wheel/pinch zoom and camera reset                |
+| Provider targeting | generic names could miss selection    | selected-object aliases, exact scene context and command-bus selection synchronization     |
+| Provider access    | adapters available only in code       | Playground mode, endpoint/model/key inputs, connection test and memory-only credentials    |
 
 ## Core updates recommended next
 
-1. Introduce ray casting and object picking, then add translation/rotation/scale gizmos.
+1. Add triangle-precise picking and translation/rotation/scale gizmos on top of bounding-box picks.
 2. Make commands reversible in core so undo does not require whole-scene snapshots.
 3. Translate `animateObject` parameters into `AnimationClip` and `AnimationAction`.
 4. Add per-resource GPU deletion and cache invalidation when scene objects are removed.
@@ -26,10 +29,11 @@ Audit scope: progressive Playground, natural-language creation and study example
 6. Move large-scene parsing and serialization to a worker-compatible boundary.
 7. Add downloadable files, drag-and-drop import and persistent local projects.
 8. Expand provider grammar through a declarative intent registry rather than a growing parser class.
+9. Add an optional server-side AI proxy so deployed sites never need long-lived browser keys.
 
 ## Deliberately deferred
 
-- viewport node editor;
+- viewport node editor and transform gizmos;
 - collaborative scene editing;
 - glTF authoring and skeletal animation;
 - physics simulation;
@@ -43,11 +47,12 @@ These items are documented as future work and are not represented as implemented
 Verified from a clean `npm ci` installation on 2026-07-30:
 
 - formatting, lint and engine/test/example TypeScript checks passed;
-- 32 unit and integration tests passed across seven files;
-- coverage reached 66% statements, 53.66% branches, 68.59% functions and 69.38% lines;
+- 35 unit and integration tests passed across seven files;
+- coverage reached 68.1% statements, 57.3% branches, 70.26% functions and 71.66% lines;
 - engine, TypeDoc and production site builds passed;
-- 8,748 generated-site local references resolved without missing files;
-- seven Chromium E2E scenarios passed, including natural-language creation and mobile layout;
-- manual Chrome checks confirmed WebGL2 rendering, four-command natural-language execution,
-  expert dry-run output, complete example source display and zero page-level horizontal overflow;
+- 8,764 generated-site local references resolved without missing files;
+- nine Chromium E2E scenarios passed, including canvas picking, camera gestures, selected-object
+  language, mocked Ollama transport, key non-persistence and mobile layout;
+- manual Chrome checks confirmed three WebGL2 draw calls, desktop provider controls, selection
+  marker placement, wrapped mobile actions and zero page-level horizontal overflow;
 - `npm audit` reported zero vulnerabilities.

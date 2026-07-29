@@ -1,4 +1,5 @@
 import { EPSILON, Vector3 } from "./Vector3.js";
+import type { Box3 } from "./Box3.js";
 
 /** Infinite ray with normalized direction. */
 export class Ray {
@@ -26,5 +27,42 @@ export class Ray {
 
   intersectsSphere(center: Readonly<Vector3>, radius: number): boolean {
     return this.distanceToPoint(center) <= radius;
+  }
+
+  /**
+   * Returns the nearest forward intersection with an axis-aligned box.
+   *
+   * The slab calculation accepts zero-thickness boxes, which is useful for
+   * picking planar geometry. `null` is returned when the box is behind or
+   * outside the ray.
+   */
+  intersectBox(box: Readonly<Box3>, out = new Vector3()): Vector3 | null {
+    let minimumDistance = Number.NEGATIVE_INFINITY;
+    let maximumDistance = Number.POSITIVE_INFINITY;
+
+    for (const axis of ["x", "y", "z"] as const) {
+      const origin = this.origin[axis];
+      const direction = this.direction[axis];
+      const minimum = box.min[axis];
+      const maximum = box.max[axis];
+      if (Math.abs(direction) <= EPSILON) {
+        if (origin < minimum || origin > maximum) return null;
+        continue;
+      }
+      let near = (minimum - origin) / direction;
+      let far = (maximum - origin) / direction;
+      if (near > far) [near, far] = [far, near];
+      minimumDistance = Math.max(minimumDistance, near);
+      maximumDistance = Math.min(maximumDistance, far);
+      if (minimumDistance > maximumDistance) return null;
+    }
+
+    if (maximumDistance < 0) return null;
+    return this.at(minimumDistance >= 0 ? minimumDistance : maximumDistance, out);
+  }
+
+  /** Tests whether this ray intersects an axis-aligned box in front of its origin. */
+  intersectsBox(box: Readonly<Box3>): boolean {
+    return this.intersectBox(box) !== null;
   }
 }

@@ -10,8 +10,10 @@ documentation site.
 
 - progressive Beginner, Builder, Advanced and Expert workspaces;
 - multi-object hierarchy, material, camera and procedural-motion controls;
+- viewport bounding-box picking, orbit/pan/zoom and selection framing;
 - reversible scene edits and safe JSON round-trip;
 - Korean/English natural-language object creation and chained operation recipes;
+- selection-aware offline/Ollama/compatible-provider command routing;
 - structured command preview and dry-run;
 - 16 filterable, typechecked learning sources.
 
@@ -19,7 +21,8 @@ documentation site.
 
 - strengthen GPU cache invalidation and context restoration;
 - replace application-level snapshot undo with reversible core commands;
-- add viewport picking and transform gizmos;
+- add triangle-precise picking and translation/rotation/scale gizmos;
+- add an optional server-side provider proxy and secret-management deployment guide;
 - connect `animateObject` directly to reusable AnimationClip construction;
 - add downloadable/importable scene files and larger scene persistence;
 - add sampled textures and richer material state;

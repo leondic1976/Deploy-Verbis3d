@@ -4,13 +4,18 @@ import {
   CommandBus,
   Engine,
   JSONSceneLoader,
+  Matrix4,
   Mesh,
   Object3D,
+  OllamaProvider,
+  OpenAICompatibleProvider,
   PerspectiveCamera,
   PlaneGeometry,
+  Ray,
   RuleBasedProvider,
   Scene,
   SphereGeometry,
+  Vector3,
   WebGL2Renderer,
 } from "../../src/index.ts";
 
@@ -105,6 +110,37 @@ const state = {
   motionPlaying: true,
   playhead: 0,
   cameraOrbit: false,
+  cameraControls: {
+    target: new Vector3(),
+    distance: 10,
+    yaw: 0,
+    pitch: 0,
+  },
+  pointerGesture: {
+    pointers: new Map(),
+    primaryId: null,
+    startX: 0,
+    startY: 0,
+    previousX: 0,
+    previousY: 0,
+    moved: false,
+    pan: false,
+    pinchDistance: 0,
+    pinchCameraDistance: 0,
+  },
+  providerMode: "rule",
+  providerSettings: {
+    ollama: {
+      endpoint: "http://127.0.0.1:11434",
+      model: "qwen3:8b",
+      apiKey: "",
+    },
+    compatible: {
+      endpoint: "",
+      model: "",
+      apiKey: "",
+    },
+  },
   editSnapshot: null,
   lastStatsUpdate: 0,
   framesSinceStats: 0,
@@ -170,6 +206,143 @@ if (renderer) {
   const sceneLoader = new JSONSceneLoader();
   const commandBus = new CommandBus(scene, { allowDelete: true });
   const ruleProvider = new RuleBasedProvider();
+  const providerLabels = {
+    rule: "Offline rules",
+    ollama: "Ollama",
+    compatible: "OpenAI-compatible API",
+  };
+
+  const providerContext = () => ({
+    scene,
+    ...(state.selected?.name ? { selectedObjectName: state.selected.name } : {}),
+  });
+
+  const saveProviderSettings = (mode) => {
+    if (mode !== "ollama" && mode !== "compatible") return;
+    state.providerSettings[mode] = {
+      endpoint: byId("provider-endpoint").value.trim(),
+      model: byId("provider-model").value.trim(),
+      apiKey: byId("provider-api-key").value,
+    };
+  };
+
+  const validateProviderEndpoint = (value) => {
+    let endpoint;
+    try {
+      endpoint = new URL(value);
+    } catch {
+      throw new Error("Provider endpoint must be a complete HTTP or HTTPS URL.");
+    }
+    if (!["http:", "https:"].includes(endpoint.protocol)) {
+      throw new Error("Provider endpoint must use HTTP or HTTPS.");
+    }
+    return endpoint.href.replace(/\/$/, "");
+  };
+
+  const providerConfiguration = () => {
+    const endpoint = validateProviderEndpoint(byId("provider-endpoint").value.trim());
+    const model = byId("provider-model").value.trim();
+    if (!model) throw new Error("Provider model is required.");
+    return {
+      endpoint,
+      model,
+      apiKey: byId("provider-api-key").value,
+    };
+  };
+
+  const activeProvider = () => {
+    if (state.providerMode === "rule") return ruleProvider;
+    const configuration = providerConfiguration();
+    if (state.providerMode === "ollama") {
+      return new OllamaProvider({
+        baseUrl: configuration.endpoint,
+        model: configuration.model,
+      });
+    }
+    return new OpenAICompatibleProvider({
+      baseUrl: configuration.endpoint,
+      model: configuration.model,
+      ...(configuration.apiKey ? { apiKey: configuration.apiKey } : {}),
+    });
+  };
+
+  const setProviderStatus = (detail, stateName = "") => {
+    const label = providerLabels[state.providerMode] ?? "AI provider";
+    byId("provider-pill").textContent = `${label} · ${detail}`;
+    byId("provider-pill").dataset.state = stateName;
+    byId("provider-kicker").textContent =
+      state.providerMode === "rule" ? "Validated offline provider" : `Validated ${label}`;
+  };
+
+  const setProviderMode = (mode) => {
+    saveProviderSettings(state.providerMode);
+    state.providerMode = mode;
+    const remote = mode === "ollama" || mode === "compatible";
+    byId("remote-provider-fields").hidden = !remote;
+    byId("provider-key-field").hidden = mode !== "compatible";
+    if (remote) {
+      const settings = state.providerSettings[mode];
+      byId("provider-endpoint").value = settings.endpoint;
+      byId("provider-model").value = settings.model;
+      byId("provider-api-key").value = settings.apiKey;
+      byId("provider-settings").open = true;
+      setProviderStatus("not tested", "idle");
+      byId("provider-result").textContent =
+        mode === "ollama"
+          ? "Start Ollama locally and allow this site origin with OLLAMA_ORIGINS."
+          : "Enter a compatible endpoint and model. API keys remain in this tab's memory only.";
+    } else {
+      setProviderStatus("ready", "success");
+      byId("provider-result").textContent = "Offline rules do not require a network or API key.";
+    }
+    logActivity("provider", `Provider selected: ${providerLabels[mode]}`);
+  };
+
+  const requestWithTimeout = async (url, options = {}) => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 8_000);
+    try {
+      return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  };
+
+  const testProviderConnection = async () => {
+    const result = byId("provider-result");
+    if (state.providerMode === "rule") {
+      setProviderStatus("ready", "success");
+      result.dataset.state = "success";
+      result.textContent = "Offline RuleBasedProvider is ready.";
+      return;
+    }
+    result.dataset.state = "";
+    result.textContent = "Connecting…";
+    setProviderStatus("testing", "idle");
+    try {
+      const configuration = providerConfiguration();
+      const headers = {};
+      if (state.providerMode === "compatible" && configuration.apiKey) {
+        headers.authorization = `Bearer ${configuration.apiKey}`;
+      }
+      const path = state.providerMode === "ollama" ? "/api/tags" : "/models";
+      const response = await requestWithTimeout(`${configuration.endpoint}${path}`, { headers });
+      if (!response.ok) throw new Error(`Provider returned HTTP ${response.status}.`);
+      saveProviderSettings(state.providerMode);
+      setProviderStatus("connected", "success");
+      result.dataset.state = "success";
+      result.textContent = `${providerLabels[state.providerMode]} connection succeeded.`;
+      logActivity("provider", `${providerLabels[state.providerMode]} connection succeeded`);
+    } catch (error) {
+      setProviderStatus("unavailable", "error");
+      result.dataset.state = "error";
+      result.textContent =
+        error instanceof Error
+          ? `${error.message} Check the endpoint, service state and CORS permission.`
+          : "Provider connection failed.";
+      logActivity("error", "Provider connection failed", result.textContent);
+    }
+  };
 
   const sceneSnapshot = () => sceneLoader.stringify(scene);
 
@@ -520,7 +693,11 @@ if (renderer) {
     const object = state.selected;
     if (!object) {
       byId("selected-name").textContent = "No selection";
-      byId("selected-type").textContent = "Choose an object in the hierarchy";
+      byId("selected-type").textContent = "Click an object in the viewport or hierarchy";
+      byId("viewport-selection").querySelector("strong").textContent = "None";
+      byId("command-target").textContent = "No selection";
+      byId("selection-marker").hidden = true;
+      canvas.dataset.selectedObject = "";
       return;
     }
     byId("selected-name").textContent = object.name || object.type;
@@ -540,6 +717,7 @@ if (renderer) {
     inputs.sz.value = object.scale.z.toFixed(2);
     byId("object-id").textContent = String(object.id);
     byId("viewport-selection").querySelector("strong").textContent = object.name || object.type;
+    byId("command-target").textContent = object.name || object.type;
 
     const isMaterialMesh = object instanceof Mesh && object.material instanceof BasicMaterial;
     byId("material-properties").hidden = !isMaterialMesh;
@@ -571,9 +749,10 @@ if (renderer) {
   };
 
   const selectObject = (object, guided = true) => {
-    state.selected = object;
-    commandBus.selectedObject = object;
-    if (guided) completeGuideStep("select");
+    const validObject = object && scene.getObjectById(object.id) ? object : null;
+    state.selected = validObject;
+    commandBus.selectedObject = validObject;
+    if (guided && validObject) completeGuideStep("select");
     renderOutliner();
     updateInspector();
   };
@@ -697,23 +876,275 @@ if (renderer) {
     byId("structured-command").value = JSON.stringify(template(target), null, 2);
   };
 
-  const setCameraView = (view) => {
-    if (view === "front") camera.position.set(0, 0.8, 8);
-    else if (view === "top") camera.position.set(0, 9, 0.01);
-    else camera.position.set(5.5, 4, 7.5);
-    camera.lookAt({ x: 0, y: 0, z: 0 });
-    logActivity("camera", `Camera view: ${view}`);
+  const applyCameraControls = () => {
+    const controls = state.cameraControls;
+    const horizontalDistance = Math.cos(controls.pitch) * controls.distance;
+    camera.position.set(
+      controls.target.x + Math.sin(controls.yaw) * horizontalDistance,
+      controls.target.y + Math.sin(controls.pitch) * controls.distance,
+      controls.target.z + Math.cos(controls.yaw) * horizontalDistance,
+    );
+    camera.lookAt(controls.target);
+    byId("camera-distance").textContent = `${controls.distance.toFixed(1)} m`;
+    canvas.dataset.cameraDistance = controls.distance.toFixed(3);
+    canvas.dataset.cameraYaw = controls.yaw.toFixed(4);
+    canvas.dataset.cameraPitch = controls.pitch.toFixed(4);
+  };
+
+  const syncCameraControls = (target = state.cameraControls.target) => {
+    const controls = state.cameraControls;
+    controls.target.copy(target);
+    const offset = camera.position.clone().subtract(controls.target);
+    controls.distance = Math.max(0.35, offset.length());
+    controls.pitch = Math.asin(
+      Math.min(1, Math.max(-1, offset.y / Math.max(controls.distance, 0.0001))),
+    );
+    controls.yaw = Math.atan2(offset.x, offset.z);
+    applyCameraControls();
+  };
+
+  const stopAutomaticCameraOrbit = () => {
+    if (!state.cameraOrbit) return;
+    state.cameraOrbit = false;
+    byId("camera-orbit").checked = false;
+    logActivity("camera", "Automatic camera orbit disabled by direct input");
+  };
+
+  const zoomCamera = (factor) => {
+    stopAutomaticCameraOrbit();
+    state.cameraControls.distance = Math.min(
+      80,
+      Math.max(0.35, state.cameraControls.distance * factor),
+    );
+    applyCameraControls();
+  };
+
+  const setCameraView = (view, log = true) => {
+    stopAutomaticCameraOrbit();
+    const controls = state.cameraControls;
+    const target = controls.target;
+    const distance = Math.max(3, controls.distance);
+    if (view === "front") {
+      camera.position.set(target.x, target.y + distance * 0.08, target.z + distance);
+    } else if (view === "top") {
+      camera.position.set(target.x, target.y + distance, target.z + 0.01);
+    } else {
+      camera.position.set(
+        target.x + distance * 0.54,
+        target.y + distance * 0.39,
+        target.z + distance * 0.74,
+      );
+    }
+    camera.lookAt(target);
+    syncCameraControls(target);
+    if (log) logActivity("camera", `Camera view: ${view}`);
+  };
+
+  const resetCamera = () => {
+    state.cameraControls.target.set(0, 0, 0);
+    state.cameraControls.distance = 10.2;
+    state.cameraControls.yaw = 0.63;
+    state.cameraControls.pitch = 0.4;
+    stopAutomaticCameraOrbit();
+    applyCameraControls();
+    logActivity("camera", "Camera reset");
+  };
+
+  const selectedWorldCenter = (object, out = new Vector3()) => {
+    object.updateWorldMatrix(true, false);
+    if (object instanceof Mesh) {
+      const sphere = object.geometry.boundingSphere ?? object.geometry.computeBoundingSphere();
+      return out.copy(sphere.center).applyMatrix4(object.worldMatrix);
+    }
+    const elements = object.worldMatrix.elements;
+    return out.set(elements[12], elements[13], elements[14]);
   };
 
   const frameSelected = () => {
     if (!state.selected) return;
-    state.selected.updateWorldMatrix(true, false);
-    const elements = state.selected.worldMatrix.elements;
-    const target = { x: elements[12], y: elements[13], z: elements[14] };
-    camera.position.set(target.x + 3.6, target.y + 2.4, target.z + 4.8);
-    camera.lookAt(target);
+    const target = selectedWorldCenter(state.selected);
+    const radius =
+      state.selected instanceof Mesh
+        ? (
+            state.selected.geometry.boundingSphere ??
+            state.selected.geometry.computeBoundingSphere()
+          ).radius
+        : 1;
+    state.cameraControls.target.copy(target);
+    state.cameraControls.distance = Math.max(2.5, radius * 4.5);
+    state.cameraControls.yaw = 0.63;
+    state.cameraControls.pitch = 0.38;
+    stopAutomaticCameraOrbit();
+    applyCameraControls();
     logActivity("camera", `Framed ${state.selected.name || state.selected.type}`);
   };
+
+  const updateSelectionMarker = () => {
+    const marker = byId("selection-marker");
+    if (!state.selected) {
+      marker.hidden = true;
+      canvas.dataset.selectedObject = "";
+      return;
+    }
+    const world = selectedWorldCenter(state.selected);
+    const projected = camera.viewProjectionMatrix.transformPoint(world);
+    const visible =
+      Number.isFinite(projected.x) &&
+      Number.isFinite(projected.y) &&
+      projected.z >= -1 &&
+      projected.z <= 1 &&
+      Math.abs(projected.x) <= 1.1 &&
+      Math.abs(projected.y) <= 1.1;
+    marker.hidden = !visible;
+    if (visible) {
+      marker.style.left = `${(projected.x * 0.5 + 0.5) * 100}%`;
+      marker.style.top = `${(-projected.y * 0.5 + 0.5) * 100}%`;
+    }
+    canvas.dataset.selectedObject = state.selected.name || state.selected.type;
+  };
+
+  const pickObjectAt = (clientX, clientY) => {
+    const bounds = canvas.getBoundingClientRect();
+    if (bounds.width <= 0 || bounds.height <= 0) return null;
+    const normalizedX = ((clientX - bounds.left) / bounds.width) * 2 - 1;
+    const normalizedY = -(((clientY - bounds.top) / bounds.height) * 2 - 1);
+    scene.updateWorldMatrix(false, true);
+    camera.updateCameraMatrices();
+    const inverseViewProjection = new Matrix4().copy(camera.viewProjectionMatrix).invert();
+    const nearPoint = new Vector3(normalizedX, normalizedY, -1).applyMatrix4(inverseViewProjection);
+    const farPoint = new Vector3(normalizedX, normalizedY, 1).applyMatrix4(inverseViewProjection);
+    const worldRay = new Ray(nearPoint, farPoint.clone().subtract(nearPoint));
+    let closest = null;
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    scene.traverseVisible((object) => {
+      if (!(object instanceof Mesh)) return;
+      const inverseWorld = object.worldMatrix.clone().invert();
+      const localOrigin = worldRay.origin.clone().applyMatrix4(inverseWorld);
+      const localEnd = worldRay.at(1).applyMatrix4(inverseWorld);
+      const localRay = new Ray(localOrigin, localEnd.subtract(localOrigin));
+      const box = object.geometry.boundingBox ?? object.geometry.computeBoundingBox();
+      const localHit = localRay.intersectBox(box);
+      if (!localHit) return;
+      const worldHit = localHit.applyMatrix4(object.worldMatrix);
+      const distance = worldRay.origin.distanceTo(worldHit);
+      if (distance < closestDistance) {
+        closest = object;
+        closestDistance = distance;
+      }
+    });
+
+    if (closest) {
+      selectObject(closest);
+      logActivity("select", `Viewport selected ${closest.name || closest.type}`);
+    }
+    return closest;
+  };
+
+  const panCamera = (deltaX, deltaY) => {
+    const scale = state.cameraControls.distance * 0.0016;
+    const right = camera.quaternion.rotateVector(Vector3.RIGHT).multiplyScalar(-deltaX * scale);
+    const up = camera.quaternion.rotateVector(Vector3.UP).multiplyScalar(deltaY * scale);
+    state.cameraControls.target.add(right).add(up);
+    applyCameraControls();
+  };
+
+  const orbitCamera = (deltaX, deltaY) => {
+    state.cameraControls.yaw -= deltaX * 0.008;
+    state.cameraControls.pitch = Math.min(
+      Math.PI / 2 - 0.02,
+      Math.max(-Math.PI / 2 + 0.02, state.cameraControls.pitch + deltaY * 0.008),
+    );
+    applyCameraControls();
+  };
+
+  const pointerDistance = () => {
+    const pointers = [...state.pointerGesture.pointers.values()];
+    if (pointers.length < 2) return 0;
+    return Math.hypot(pointers[0].x - pointers[1].x, pointers[0].y - pointers[1].y);
+  };
+
+  canvas.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    canvas.setPointerCapture(event.pointerId);
+    const gesture = state.pointerGesture;
+    gesture.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (gesture.pointers.size === 1) {
+      gesture.primaryId = event.pointerId;
+      gesture.startX = event.clientX;
+      gesture.startY = event.clientY;
+      gesture.previousX = event.clientX;
+      gesture.previousY = event.clientY;
+      gesture.moved = false;
+      gesture.pan = event.shiftKey || event.button === 1 || event.button === 2;
+    } else if (gesture.pointers.size === 2) {
+      gesture.moved = true;
+      gesture.pinchDistance = pointerDistance();
+      gesture.pinchCameraDistance = state.cameraControls.distance;
+    }
+  });
+
+  canvas.addEventListener("pointermove", (event) => {
+    const gesture = state.pointerGesture;
+    if (!gesture.pointers.has(event.pointerId)) return;
+    event.preventDefault();
+    gesture.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (gesture.pointers.size >= 2) {
+      const distance = pointerDistance();
+      if (distance > 0 && gesture.pinchDistance > 0) {
+        stopAutomaticCameraOrbit();
+        state.cameraControls.distance = Math.min(
+          80,
+          Math.max(0.35, gesture.pinchCameraDistance * (gesture.pinchDistance / distance)),
+        );
+        applyCameraControls();
+      }
+      return;
+    }
+    if (gesture.primaryId !== event.pointerId) return;
+    const totalDistance = Math.hypot(
+      event.clientX - gesture.startX,
+      event.clientY - gesture.startY,
+    );
+    if (totalDistance > 4) gesture.moved = true;
+    if (!gesture.moved) return;
+    stopAutomaticCameraOrbit();
+    const deltaX = event.clientX - gesture.previousX;
+    const deltaY = event.clientY - gesture.previousY;
+    if (gesture.pan || event.shiftKey) panCamera(deltaX, deltaY);
+    else orbitCamera(deltaX, deltaY);
+    gesture.previousX = event.clientX;
+    gesture.previousY = event.clientY;
+  });
+
+  const endPointerGesture = (event, pick) => {
+    const gesture = state.pointerGesture;
+    if (!gesture.pointers.has(event.pointerId)) return;
+    const shouldPick =
+      pick &&
+      gesture.pointers.size === 1 &&
+      gesture.primaryId === event.pointerId &&
+      !gesture.moved;
+    gesture.pointers.delete(event.pointerId);
+    if (shouldPick) pickObjectAt(event.clientX, event.clientY);
+    if (gesture.primaryId === event.pointerId) gesture.primaryId = null;
+    if (gesture.pointers.size < 2) {
+      gesture.pinchDistance = 0;
+      gesture.pinchCameraDistance = 0;
+    }
+  };
+
+  canvas.addEventListener("pointerup", (event) => endPointerGesture(event, true));
+  canvas.addEventListener("pointercancel", (event) => endPointerGesture(event, false));
+  canvas.addEventListener(
+    "wheel",
+    (event) => {
+      event.preventDefault();
+      zoomCamera(Math.exp(event.deltaY * 0.0015));
+    },
+    { passive: false },
+  );
+  canvas.addEventListener("contextmenu", (event) => event.preventDefault());
 
   const applySceneFromParsed = (parsed) => {
     clearScene();
@@ -963,9 +1394,23 @@ if (renderer) {
     button.addEventListener("click", () => setCameraView(button.dataset.cameraView));
   }
   byId("frame-selection").addEventListener("click", frameSelected);
+  byId("zoom-in").addEventListener("click", () => zoomCamera(0.8));
+  byId("zoom-out").addEventListener("click", () => zoomCamera(1.25));
+  byId("reset-camera").addEventListener("click", resetCamera);
   byId("viewport-guides").addEventListener("change", () => {
     byId("viewport-guide-overlay").hidden = !byId("viewport-guides").checked;
   });
+  byId("provider-mode").addEventListener("change", () => {
+    setProviderMode(byId("provider-mode").value);
+  });
+  byId("test-provider").addEventListener("click", testProviderConnection);
+  for (const id of ["provider-endpoint", "provider-model", "provider-api-key"]) {
+    byId(id).addEventListener("input", () => {
+      if (state.providerMode === "rule") return;
+      setProviderStatus("not tested", "idle");
+      byId("provider-result").dataset.state = "";
+    });
+  }
 
   commandForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -973,10 +1418,8 @@ if (renderer) {
     commandResult.textContent = "Parsing and validating command…";
     const before = sceneSnapshot();
     try {
-      const commands = await ruleProvider.parseCommand(naturalCommand.value, {
-        scene,
-        ...(state.selected?.name ? { selectedObjectName: state.selected.name } : {}),
-      });
+      const provider = activeProvider();
+      const commands = await provider.parseCommand(naturalCommand.value, providerContext());
       naturalPreview.textContent = JSON.stringify(commands, null, 2);
       const dryRun = byId("natural-dry-run").checked;
       const results = commandBus.executeMany(commands, { dryRun });
@@ -985,17 +1428,14 @@ if (renderer) {
       normalizeNaturalAnimations();
       if (!dryRun) {
         recordHistory(`Natural language: ${naturalCommand.value}`, before);
-        const selectedResult = [...results]
-          .reverse()
-          .map((item) => (item.targetId ? scene.getObjectById(item.targetId) : null))
-          .find(Boolean);
-        selectObject(selectedResult ?? firstObject() ?? null, false);
+        selectObject(commandBus.selectedObject, false);
         commandResult.textContent = `${results.length} command(s) validated and applied.`;
         completeGuideStep("command");
       } else {
         commandResult.textContent = `${results.length} command(s) validated. Dry run made no changes.`;
       }
       commandResult.dataset.state = "success";
+      if (state.providerMode !== "rule") setProviderStatus("active", "success");
       logActivity(
         dryRun ? "validation" : "command",
         dryRun ? "Natural-language dry run passed" : "Natural-language command applied",
@@ -1089,7 +1529,7 @@ if (renderer) {
   const resizeObserver = new ResizeObserver(resize);
   resizeObserver.observe(canvas);
 
-  engine.onUpdate((deltaTime, elapsedTime) => {
+  engine.onUpdate((deltaTime) => {
     if (state.motionPlaying) {
       state.playhead = (state.playhead + deltaTime) % 10;
       scene.traverse((object) => {
@@ -1102,9 +1542,8 @@ if (renderer) {
       byId("timeline-value").textContent = `${state.playhead.toFixed(1)} s`;
     }
     if (state.cameraOrbit) {
-      const angle = elapsedTime * 0.25;
-      camera.position.set(Math.cos(angle) * 8, 3.5, Math.sin(angle) * 8);
-      camera.lookAt({ x: 0, y: 0, z: 0 });
+      state.cameraControls.yaw += deltaTime * 0.25;
+      applyCameraControls();
     }
 
     state.framesSinceStats += 1;
@@ -1117,6 +1556,11 @@ if (renderer) {
       state.framesSinceStats = 0;
       state.lastStatsUpdate = now;
     }
+  });
+  engine.onRender(() => {
+    scene.updateWorldMatrix(false, true);
+    camera.updateCameraMatrices();
+    updateSelectionMarker();
   });
 
   window.addEventListener(
@@ -1136,16 +1580,22 @@ if (renderer) {
   try {
     loadPreset("starter");
     resize();
+    syncCameraControls(new Vector3());
     refreshWorkspace();
     renderActivity();
     updateCommandTemplate();
     setWorkspaceLevel(initialLevel);
+    setProviderMode("rule");
     if (requestedCommand) naturalCommand.value = requestedCommand;
     selectObject(state.selected, false);
     engine.start();
     canvas.dataset.webglReady = "true";
     byId("stat-webgl").textContent = "WebGL2";
-    logActivity("system", "Starter scene ready", "WebGL2 renderer · offline command provider");
+    logActivity(
+      "system",
+      "Starter scene ready",
+      "WebGL2 renderer · offline rules · optional Ollama or compatible API",
+    );
   } catch (error) {
     canvas.dataset.webglReady = "false";
     byId("stat-webgl").textContent = "Unavailable";

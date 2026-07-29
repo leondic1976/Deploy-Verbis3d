@@ -41,12 +41,12 @@ export class CommandBus {
       },
       options.dryRun ?? false,
     );
-    if (result.success && validation.command.command === "selectObject" && !options.dryRun) {
-      const target = validation.command.target;
-      this.selectedObject =
-        target?.id !== undefined
-          ? (this.scene.getObjectById(target.id) ?? null)
-          : (this.scene.getObjectByName(target?.name ?? "") ?? null);
+    if (result.success && !options.dryRun) {
+      if (validation.command.command === "deleteObject") {
+        if (this.selectedObject?.id === result.targetId) this.selectedObject = null;
+      } else if (result.targetId !== undefined) {
+        this.selectedObject = this.scene.getObjectById(result.targetId) ?? this.selectedObject;
+      }
     }
     this.history.add(validation.command, result);
     return result;

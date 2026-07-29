@@ -16,8 +16,9 @@ lifecycle, serialization, asset caching and scene-to-render-list behavior.
 
 The Chromium E2E suite checks navigation, WebGL2 initialization, draw readiness, responsive
 layout, all four Playground levels, undo/redo, structured command dry-runs, natural-language scene
-creation, the example source viewer and console errors. It avoids pixel snapshots because virtual
-GPU output varies.
+creation, selected-object context, mocked Ollama transport, viewport picking, orbit/zoom, the
+example source viewer and console errors. It avoids pixel snapshots because virtual GPU output
+varies.
 
 `npm run typecheck` includes `tsconfig.examples.json`, so every source shown in the learning
 library is checked against the current public API.

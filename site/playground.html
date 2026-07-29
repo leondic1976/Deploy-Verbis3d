@@ -169,10 +169,32 @@
             <button class="tool-button" type="button" data-camera-view="top">Top</button>
             <button class="tool-button" id="frame-selection" type="button">Frame selected</button>
           </div>
-          <label class="toggle-control">
-            <input id="viewport-guides" type="checkbox" checked />
-            <span>Guides</span>
-          </label>
+          <div class="viewport-toolbar-actions">
+            <div class="tool-group camera-zoom-controls" role="group" aria-label="Camera zoom">
+              <button
+                class="tool-button icon-control"
+                id="zoom-out"
+                type="button"
+                aria-label="Zoom out"
+              >
+                −
+              </button>
+              <output id="camera-distance" aria-live="polite">9.9 m</output>
+              <button
+                class="tool-button icon-control"
+                id="zoom-in"
+                type="button"
+                aria-label="Zoom in"
+              >
+                +
+              </button>
+              <button class="tool-button" id="reset-camera" type="button">Reset view</button>
+            </div>
+            <label class="toggle-control">
+              <input id="viewport-guides" type="checkbox" checked />
+              <span>Guides</span>
+            </label>
+          </div>
         </div>
         <div class="canvas-shell studio-canvas-shell">
           <canvas id="playground-canvas" aria-label="Interactive Verbis3D multi-object scene">
@@ -183,6 +205,9 @@
             <span class="axis-label axis-y">Y</span>
             <span class="axis-label axis-z">Z</span>
             <span class="viewport-crosshair"></span>
+          </div>
+          <div class="selection-marker" id="selection-marker" aria-hidden="true">
+            <span></span>
           </div>
           <div class="selection-chip" id="viewport-selection">
             <span class="status-dot"></span>
@@ -206,6 +231,12 @@
               <dd id="stat-webgl">Starting</dd>
             </div>
           </dl>
+          <p class="viewport-input-hint">
+            <span><strong>Click</strong> select</span>
+            <span><strong>Drag</strong> orbit</span>
+            <span><strong>Shift + drag</strong> pan</span>
+            <span><strong>Wheel / pinch</strong> zoom</span>
+          </p>
         </div>
 
         <section class="command-dock" aria-labelledby="command-dock-title">
@@ -248,9 +279,78 @@
           <div id="command-panel" class="dock-panel" role="tabpanel" aria-labelledby="command-tab">
             <div class="command-intro">
               <div>
-                <p class="panel-kicker">Validated offline provider</p>
+                <p class="panel-kicker" id="provider-kicker">Validated offline provider</p>
                 <h2 id="command-dock-title">Describe the change you want</h2>
               </div>
+              <div class="command-context">
+                <span>Fallback target</span>
+                <strong id="command-target" aria-live="polite">cube</strong>
+              </div>
+            </div>
+            <details class="provider-settings" id="provider-settings">
+              <summary>
+                <span>AI provider</span>
+                <span class="provider-pill" id="provider-pill">Offline rules · ready</span>
+              </summary>
+              <div class="provider-settings-body">
+                <div class="provider-grid">
+                  <label for="provider-mode">
+                    Provider
+                    <select id="provider-mode">
+                      <option value="rule">Offline rules</option>
+                      <option value="ollama">Ollama</option>
+                      <option value="compatible">OpenAI-compatible API</option>
+                    </select>
+                  </label>
+                </div>
+                <div id="remote-provider-fields" hidden>
+                  <div class="provider-grid">
+                    <label for="provider-endpoint">
+                      Endpoint
+                      <input
+                        id="provider-endpoint"
+                        type="url"
+                        value="http://127.0.0.1:11434"
+                        spellcheck="false"
+                        autocomplete="url"
+                      />
+                    </label>
+                    <label for="provider-model">
+                      Model
+                      <input
+                        id="provider-model"
+                        value="qwen3:8b"
+                        spellcheck="false"
+                        autocomplete="off"
+                      />
+                    </label>
+                  </div>
+                  <label id="provider-key-field" for="provider-api-key" hidden>
+                    API key
+                    <input
+                      id="provider-api-key"
+                      type="password"
+                      autocomplete="new-password"
+                      spellcheck="false"
+                      placeholder="Held in memory for this tab only"
+                    />
+                  </label>
+                  <div class="provider-actions">
+                    <button id="test-provider" class="secondary compact" type="button">
+                      Test connection
+                    </button>
+                    <p id="provider-result" role="status">
+                      Remote providers require endpoint CORS permission for this site.
+                    </p>
+                  </div>
+                  <p class="provider-security">
+                    The key is never stored, logged or added to scene JSON. Production apps should
+                    send provider requests through a server-side proxy.
+                  </p>
+                </div>
+              </div>
+            </details>
+            <div class="command-options">
               <label class="toggle-control">
                 <input id="natural-dry-run" type="checkbox" />
                 <span>Dry run</span>
@@ -262,6 +362,7 @@
                 <input
                   id="natural-command"
                   value="큐브를 오른쪽으로 2 이동"
+                  placeholder="예: 선택한 객체를 위로 1 이동"
                   autocomplete="off"
                   aria-describedby="command-help"
                 />

@@ -80,6 +80,11 @@ describe("math core", () => {
     expect(
       new Ray(new Vector3(0, 0, 5), new Vector3(0, 0, -1)).intersectsSphere(Vector3.ZERO, 1),
     ).toBe(true);
+    const rayBox = new Box3(new Vector3(-1, -1, -4), new Vector3(1, 1, -2));
+    expect(new Ray(new Vector3(), new Vector3(0, 0, -1)).intersectBox(rayBox)).toEqual(
+      new Vector3(0, 0, -2),
+    );
+    expect(new Ray(new Vector3(3, 0, 0), new Vector3(0, 0, -1)).intersectsBox(rayBox)).toBe(false);
     expect(
       new Plane()
         .setFromNormalAndPoint(Vector3.UP, Vector3.ZERO)
