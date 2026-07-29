@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Verbis3D 설치, 장면 구성, 복합 모델, 자연어 명령을 설명하는 한국어 사용 가이드."
+    />
+    <title>한국어 사용 가이드 · Verbis3D</title>
+    <link rel="stylesheet" href="./styles/main.css" />
+  </head>
+  <body data-page="guide-ko">
+    <a class="skip-link" href="#main">본문으로 이동</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="./index.html">Verbis<span>3D</span></a
+        ><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+          메뉴
+        </button>
+        <nav class="site-nav" id="site-nav" aria-label="주요 메뉴">
+          <a data-page="home" href="./index.html">Home</a
+          ><a data-page="docs" href="./docs.html">Docs</a
+          ><a data-page="examples" href="./examples.html">Examples</a
+          ><a data-page="playground" href="./playground.html">Playground</a
+          ><a data-page="architecture" href="./architecture.html">Architecture</a
+          ><a data-page="roadmap" href="./roadmap.html">Roadmap</a
+          ><a data-page="guide-ko" href="./guide-ko.html" lang="ko">한국어</a
+          ><a href="./api/index.html">API</a
+          ><a href="https://github.com/leondic1976/Deploy-Verbis3d">GitHub</a>
+        </nav>
+      </div>
+    </header>
+    <main id="main" class="docs-layout">
+      <aside class="docs-sidebar" aria-label="한국어 문서 목차">
+        <h2>시작하기</h2>
+        <a href="#status">현재 범위</a><a href="#install">설치와 실행</a
+        ><a href="#first-scene">첫 장면</a>
+        <h2>장면 만들기</h2>
+        <a href="#transform">객체 변형</a><a href="#compound">자동차와 얼굴</a
+        ><a href="#custom-geometry">임의 도형</a>
+        <h2>자연어</h2>
+        <a href="#natural-language">오프라인 명령</a><a href="#providers">Ollama와 API</a
+        ><a href="#playground-ko">Playground 실습</a><a href="#troubleshooting">문제 해결</a>
+      </aside>
+      <article class="docs-content">
+        <p class="eyebrow">한국어 문서 · 0.1 alpha</p>
+        <h1>Verbis3D를 처음부터 사용해 보세요.</h1>
+        <p class="lead">
+          설치, WebGL2 장면, 객체 변형, 편집 가능한 자동차·얼굴, 안전한 자연어 명령을 실제 코드
+          순서대로 설명합니다.
+        </p>
+
+        <section id="status">
+          <h2>현재 범위</h2>
+          <p>
+            Verbis3D는 TypeScript와 WebGL2로 직접 구현한 독립 3D 엔진입니다. 런타임 의존성에 완성형
+            3D 엔진이 없으며, 수학·장면 그래프·카메라·지오메트리·재질과 WebGL2 렌더 경로를
+            저장소에서 구현합니다.
+          </p>
+          <div class="callout">
+            자동차와 얼굴은 계층 모델링을 배우기 위한 절차적 예제입니다. glTF, 스키닝, 고밀도 얼굴
+            메시, PBR과 그림자는 아직 구현되지 않았습니다.
+          </div>
+        </section>
+
+        <section id="install">
+          <h2>설치와 실행</h2>
+          <pre><code>git clone https://github.com/leondic1976/Deploy-Verbis3d.git
+cd Deploy-Verbis3d
+npm ci
+npm run typecheck
+npm run test
+npm run site:dev</code></pre>
+          <p>
+            현재 버전은 <code>0.1.0-alpha.1</code> 소스 릴리스입니다. npm 게시 전이므로 다른
+            프로젝트에서 시험하려면 <code>npm run build &amp;&amp; npm pack</code>으로 로컬 패키지를
+            만듭니다.
+          </p>
+        </section>
+
+        <section id="first-scene">
+          <h2>첫 장면</h2>
+          <pre><code>import {
+  BasicMaterial, BoxGeometry, Engine, Mesh,
+  PerspectiveCamera, Scene, WebGL2Renderer
+} from "@verbis3d/core";
+
+const canvas = document.querySelector("#stage");
+if (!(canvas instanceof HTMLCanvasElement)) {
+  throw new Error("canvas가 필요합니다.");
+}
+
+const renderer = new WebGL2Renderer({ canvas, maxDevicePixelRatio: 2 });
+const scene = new Scene();
+scene.background.set(0.025, 0.045, 0.065, 1);
+const camera = new PerspectiveCamera(60, 1, 0.1, 100);
+camera.position.set(0, 1.5, 5);
+camera.lookAt({ x: 0, y: 0, z: 0 });
+
+const cube = new Mesh(
+  new BoxGeometry(),
+  new BasicMaterial({ color: [0.2, 0.7, 1, 1] })
+);
+cube.name = "cube";
+scene.add(cube);
+
+const engine = new Engine({ renderer, scene, camera });
+engine.onUpdate((dt) => cube.rotateY(dt));
+engine.start();</code></pre>
+          <p>
+            canvas 크기가 바뀔 때 <code>renderer.setSize(width, height, false)</code>와
+            <code>camera.resize(width, height)</code>를 함께 호출하십시오. 화면을 제거할 때는
+            ResizeObserver를 끊고 <code>engine.dispose()</code>를 호출합니다.
+          </p>
+        </section>
+
+        <section id="transform">
+          <h2>객체 이동·회전·변형</h2>
+          <pre><code>object.position.set(2, 1, -3);
+object.rotation.set(0, Math.PI / 4, 0);
+object.scale.set(1, 2, 1);
+
+object.translateX(1);
+object.rotateY(Math.PI / 6);
+object.lookAt({ x: 0, y: 0, z: 0 });</code></pre>
+          <p>
+            엔진 내부 각도는 라디안입니다. 부모 루트를 변형하면 자식이 함께 움직이고, 자식
+            transform을 변경하면 해당 부품만 부모 기준으로 바뀝니다. 장면 객체 이름은 자연어
+            대상이므로 고유하게 지정하는 것이 좋습니다.
+          </p>
+          <div class="actions">
+            <a class="button" href="./playground.html?level=advanced&amp;preset=transform-lab"
+              >변형 실습 열기</a
+            >
+          </div>
+        </section>
+
+        <section id="compound">
+          <h2>자동차와 얼굴</h2>
+          <pre><code>const car = createProceduralCar({
+  name: "study-car",
+  bodyColor: [0.08, 0.56, 0.92, 1]
+});
+car.position.set(-2, -1.35, 0);
+car.rotateY(Math.PI / 8);
+scene.add(car);
+
+const face = createProceduralFace({ name: "portrait" });
+face.position.set(2, -1.35, 0);
+scene.add(face);
+face.getObjectByName("portrait-mouth")?.scale.set(0.7, 0.14, 0.08);</code></pre>
+          <p>
+            자동차는 22개, 얼굴은 18개 선택 가능한 부품을 갖습니다. 루트는 전체 모델을 변형하고,
+            <code>{루트 이름}-{부품 역할}</code> 이름으로 창문·바퀴·눈·입 등을 따로 조회할 수
+            있습니다. 일반 <code>Object3D</code> 계층이므로 JSON 저장과 복원도 같은 경로를
+            사용합니다.
+          </p>
+          <div class="actions">
+            <a class="button" href="./playground.html?level=builder&amp;preset=car-workshop"
+              >자동차 편집</a
+            ><a
+              class="button secondary"
+              href="./playground.html?level=advanced&amp;preset=face-study"
+              >얼굴 편집</a
+            >
+          </div>
+        </section>
+
+        <section id="custom-geometry">
+          <h2>임의 도형</h2>
+          <p>
+            내장 도형만 사용할 필요는 없습니다. <code>Geometry</code>에 position
+            <code>BufferAttribute</code>와 index를 넣고 bounds를 계산하면 사용자 메시가 됩니다. 이
+            저수준 경계가 다양한 입체를 추가하는 기본 확장점입니다.
+          </p>
+          <pre><code>const geometry = new Geometry()
+  .setAttribute("position", new BufferAttribute(
+    new Float32Array([0, 1, 0, -1, -1, 0, 1, -1, 0]), 3
+  ))
+  .setIndex([0, 1, 2]);
+geometry.computeBoundingBox();
+geometry.computeBoundingSphere();</code></pre>
+        </section>
+
+        <section id="natural-language">
+          <h2>오프라인 자연어 명령</h2>
+          <pre><code>const controller = engine.useNaturalLanguage({
+  provider: new RuleBasedProvider()
+});
+
+await controller.execute(
+  "파란 자동차를 만들어 오른쪽으로 2 이동하고 30도 회전"
+);</code></pre>
+          <p>
+            자연어는 <code>EngineCommand[]</code> 데이터로 바뀐 뒤 schema, 대상, 범위, 권한 검사를
+            통과해야 실행됩니다. <code>eval</code>이나 생성 JavaScript 실행은 없습니다. box, sphere,
+            plane, car, face 생성과 이동·회전·크기·색상·표시·복제 등을 지원합니다.
+          </p>
+        </section>
+
+        <section id="providers">
+          <h2>Ollama와 호환 API</h2>
+          <pre><code>const local = new OllamaProvider({
+  model: "qwen3:8b",
+  baseUrl: "http://127.0.0.1:11434"
+});
+
+const remote = new OpenAICompatibleProvider({
+  baseUrl: "https://provider.example/v1",
+  model: "command-model",
+  apiKey
+});</code></pre>
+          <p>
+            브라우저 직접 요청에는 endpoint의 CORS 허용이 필요합니다. 장기 API 키를 프런트엔드
+            번들에 넣지 말고 운영 환경에서는 서버 프록시를 사용하십시오. Playground 키 입력은 현재
+            탭 메모리에만 유지되고 storage와 장면 JSON에는 기록되지 않습니다.
+          </p>
+        </section>
+
+        <section id="playground-ko">
+          <h2>Playground 권장 실습</h2>
+          <ol>
+            <li>객체 목록 또는 viewport에서 cube를 선택합니다.</li>
+            <li>Inspector로 위치·회전·크기를 바꿉니다.</li>
+            <li>드래그 orbit, Shift 드래그 pan, 휠 zoom을 시험합니다.</li>
+            <li>Builder에서 Car나 Face bust를 추가하고 루트를 변형합니다.</li>
+            <li>계층을 펼쳐 wheel, window, eye, mouth를 각각 선택합니다.</li>
+            <li>자연어 preview와 dry-run 결과를 확인한 뒤 실행합니다.</li>
+            <li>Expert에서 장면 JSON을 내보내고 다시 불러옵니다.</li>
+          </ol>
+        </section>
+
+        <section id="troubleshooting">
+          <h2>문제 해결</h2>
+          <ul>
+            <li>빈 화면이면 canvas 크기, 카메라 위치, near/far와 visible을 확인합니다.</li>
+            <li>같은 이름이 있으면 자연어 명령이 <code>AMBIGUOUS_TARGET</code>으로 멈춥니다.</li>
+            <li>Ollama 실패 시 프로세스, endpoint, 모델 이름과 CORS를 확인합니다.</li>
+            <li>복합 모델 전체가 안 보이면 루트를 선택하고 Frame selected를 누릅니다.</li>
+            <li>고밀도 외부 모델 로드는 아직 glTF 범위가 구현되지 않았습니다.</li>
+          </ul>
+        </section>
+      </article>
+    </main>
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span>Verbis3D 한국어 사용 가이드</span><a href="./playground.html">Scene Lab 열기</a>
+      </div>
+    </footer>
+    <script type="module" src="./scripts/site.js"></script>
+  </body>
+</html>

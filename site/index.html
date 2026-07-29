@@ -25,6 +25,7 @@
           <a data-page="playground" href="./playground.html">Playground</a>
           <a data-page="architecture" href="./architecture.html">Architecture</a>
           <a data-page="roadmap" href="./roadmap.html">Roadmap</a>
+          <a data-page="guide-ko" href="./guide-ko.html" lang="ko">한국어</a>
           <a href="./api/index.html">API</a>
           <a href="https://github.com/leondic1976/Deploy-Verbis3d">GitHub</a>
         </nav>
@@ -43,6 +44,7 @@
           <div class="actions">
             <a class="button" href="./docs.html#get-started">Start building</a>
             <a class="button secondary" href="./playground.html">Open playground</a>
+            <a class="button secondary" href="./guide-ko.html" lang="ko">한국어 사용 가이드</a>
           </div>
         </div>
         <div class="demo-shell">
@@ -68,21 +70,21 @@
           <div class="natural-command-flow">
             <article>
               <span>01 · Intent</span>
-              <code>빨간 구를 만들어 오른쪽으로 2 이동하고 천천히 회전시켜</code>
+              <code>파란 자동차를 만들어 오른쪽으로 2 이동하고 30도 회전</code>
             </article>
             <article>
               <span>02 · Validated data</span>
-              <code>createObject → moveObject → animateObject → setColor</code>
+              <code>createObject → moveObject → rotateObject → setColor</code>
             </article>
             <article>
               <span>03 · Engine result</span>
-              <p>A new red sphere is created, positioned and given persistent spin metadata.</p>
+              <p>A 22-part car is created, painted, positioned and rotated as one hierarchy.</p>
             </article>
           </div>
           <div class="actions">
             <a
               class="button"
-              href="./playground.html?level=beginner&amp;command=%EB%B9%A8%EA%B0%84%20%EA%B5%AC%EB%A5%BC%20%EB%A7%8C%EB%93%A4%EC%96%B4%20%EC%98%A4%EB%A5%B8%EC%AA%BD%EC%9C%BC%EB%A1%9C%202%20%EC%9D%B4%EB%8F%99%ED%95%98%EA%B3%A0%20%EC%B2%9C%EC%B2%9C%ED%9E%88%20%ED%9A%8C%EC%A0%84%EC%8B%9C%EC%BC%9C"
+              href="./playground.html?level=builder&amp;command=%ED%8C%8C%EB%9E%80%20%EC%9E%90%EB%8F%99%EC%B0%A8%EB%A5%BC%20%EB%A7%8C%EB%93%A4%EC%96%B4%20%EC%98%A4%EB%A5%B8%EC%AA%BD%EC%9C%BC%EB%A1%9C%202%20%EC%9D%B4%EB%8F%99%ED%95%98%EA%B3%A0%2030%EB%8F%84%20%ED%9A%8C%EC%A0%84"
               >Run this instruction</a
             >
             <a class="button secondary" href="./examples.html">Study command examples</a>
@@ -101,7 +103,10 @@
           <div class="feature-grid">
             <article class="feature">
               <strong>Engine-owned foundations</strong>
-              <p>Column-major math, scene graph, cameras, geometry, materials and frame loop.</p>
+              <p>
+                Column-major math, scene graph, cameras, geometry, materials, compound models and
+                frame loop.
+              </p>
             </article>
             <article class="feature">
               <strong>WebGL2 backend</strong>
@@ -121,7 +126,8 @@
           <div class="section-heading">
             <h2>Small enough to read. Complete enough to run.</h2>
             <p>
-              The alpha API renders an indexed cube and supports offline Korean/English commands.
+              The alpha API renders indexed geometry, editable car/face hierarchies and supports
+              offline Korean/English commands.
             </p>
           </div>
           <pre><code>const renderer = new WebGL2Renderer({ canvas });
@@ -145,8 +151,8 @@ new Engine({ renderer, scene, camera }).start();</code></pre>
             <article class="status-item complete">
               <strong>Implemented</strong>
               <p>
-                Math, scene graph, camera, primitives, basic WebGL2 renderer, tests and static
-                playground.
+                Math, scene graph, camera, custom/primitive geometry, compound models, WebGL2
+                renderer, tests and Playground.
               </p>
             </article>
             <article class="status-item complete">

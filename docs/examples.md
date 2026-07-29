@@ -1,6 +1,6 @@
 # Learning examples
 
-The Examples site exposes 16 complete TypeScript sources. `tsconfig.examples.json` checks them in
+The Examples site exposes 18 complete TypeScript sources. `tsconfig.examples.json` checks them in
 CI so the catalog cannot silently drift away from public exports.
 
 ## Suggested order
@@ -12,12 +12,14 @@ CI so the catalog cannot silently drift away from public exports.
 5. Material and render state
 6. Camera frustum checks
 7. Engine frame phases
-8. Structured commands
-9. Keyframe animation
-10. Scene JSON round-trip
-11. Asset cache and plugin lifecycle
-12. Natural-language creation and scene recipes
-13. Command safety and custom provider adapters
+8. Editable procedural car
+9. Structured commands
+10. Keyframe animation
+11. Editable procedural face
+12. Scene JSON round-trip
+13. Asset cache and plugin lifecycle
+14. Natural-language creation and scene recipes
+15. Command safety and custom provider adapters
 
 Use the level and topic filters to narrow the catalog. The source viewer supports copying the
 complete file and links to the matching repository directory. Examples that have an interactive

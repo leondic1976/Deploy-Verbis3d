@@ -8,21 +8,22 @@ stable release.
 
 ## Current development stage
 
-| Area               | Status          | Evidence                                                                    |
-| ------------------ | --------------- | --------------------------------------------------------------------------- |
-| Math core          | Implemented     | Vector, quaternion, matrix, bounds, ray, plane and frustum tests            |
-| Scene graph        | Implemented     | Cycle-safe hierarchy, transforms, traversal and lifecycle tests             |
-| Cameras            | Implemented     | Perspective/orthographic matrices and frustum tests                         |
-| Geometry/material  | Implemented     | Box, plane, sphere, bounds and basic unlit material tests                   |
-| WebGL2 renderer    | Alpha           | Functional shader/buffer/VAO/indexed draw path; browser-tested cube         |
-| Engine loop        | Implemented     | Fixed/update/render phases, pause/resume and duplicate-start guard          |
-| Animation          | Foundation      | Scalar/vector/quaternion tracks and action playback; no skeletal animation  |
-| Commands           | Implemented MVP | Validation, dry-run, history, permission and ambiguity handling             |
-| Natural language   | Implemented MVP | Selection-aware offline rules plus Ollama and compatible API adapters       |
-| Assets/plugins     | Foundation      | JSON scene round-trip, texture load boundary and plugin lifecycle           |
-| Playground         | Implemented     | Picking, orbit/pan/zoom, four learning levels, commands, JSON and providers |
-| Learning examples  | Implemented     | 16 filterable, CI-typechecked TypeScript sources with source viewer         |
-| Documentation site | Implemented     | Static guides, generated API reference, live demos and checked local links  |
+| Area               | Status          | Evidence                                                                   |
+| ------------------ | --------------- | -------------------------------------------------------------------------- |
+| Math core          | Implemented     | Vector, quaternion, matrix, bounds, ray, plane and frustum tests           |
+| Scene graph        | Implemented     | Cycle-safe hierarchy, transforms, traversal and lifecycle tests            |
+| Cameras            | Implemented     | Perspective/orthographic matrices and frustum tests                        |
+| Geometry/material  | Implemented     | Primitive/custom buffers, bounds, unlit material and compound-model tests  |
+| WebGL2 renderer    | Alpha           | Functional shader/buffer/VAO/indexed draw path; browser-tested cube        |
+| Engine loop        | Implemented     | Fixed/update/render phases, pause/resume and duplicate-start guard         |
+| Animation          | Foundation      | Scalar/vector/quaternion tracks and action playback; no skeletal animation |
+| Commands           | Implemented MVP | Validation, dry-run, history, permission and ambiguity handling            |
+| Natural language   | Implemented MVP | Selection-aware offline rules plus Ollama and compatible API adapters      |
+| Assets/plugins     | Foundation      | JSON scene round-trip, texture load boundary and plugin lifecycle          |
+| Playground         | Implemented     | Picking, camera control, transforms, compound models, JSON and providers   |
+| Learning examples  | Implemented     | 18 filterable, CI-typechecked TypeScript sources with source viewer        |
+| Korean docs        | Implemented     | Guided setup, modeling, Playground, natural-language and provider guides   |
+| Documentation site | Implemented     | English/Korean guides, generated API, live demos and checked local links   |
 
 Planned but not implemented: glTF, skeletal animation, physically based materials, shadows,
 physics, production texture/material pipelines and a WebGPU backend.
@@ -38,6 +39,8 @@ physics, production texture/material pipelines and a WebGPU backend.
 - Structured command bus shared by code and natural-language integrations
 - No `eval`, `new Function`, or generated-script execution
 - JSON scene serialization and explicit plugin lifecycle
+- Editable procedural car and face hierarchies built from engine-native geometry
+- Automated guard against completed third-party 3D engine dependencies and imports
 
 ## Install
 
@@ -92,6 +95,7 @@ const naturalLanguage = engine.useNaturalLanguage({
 });
 
 await naturalLanguage.execute("빨간 구를 만들어 오른쪽으로 2 이동하고 천천히 회전시켜");
+await naturalLanguage.execute("파란 자동차를 만들어 오른쪽으로 2 이동하고 30도 회전");
 ```
 
 In the Scene Lab, click an object in the viewport or hierarchy and use phrases such as
@@ -156,6 +160,8 @@ Run the site locally with `npm run site:dev`. Generated API documentation is wri
 ## Documentation and site
 
 - [Getting started](docs/getting-started.md)
+- [한국어 문서](docs/ko/README.md)
+- [한국어 웹 가이드](https://leondic1976.github.io/Deploy-Verbis3d/guide-ko.html)
 - [Playground guide](docs/playground.md)
 - [Learning examples](docs/examples.md)
 - [API overview](docs/api/README.md)

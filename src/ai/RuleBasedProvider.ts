@@ -1,17 +1,19 @@
 import type { EngineCommand } from "../commands/index.js";
 import type { AICommandContext, AIProvider } from "./AIProvider.js";
 
-type PrimitiveShape = "box" | "sphere" | "plane";
+type CreationShape = "box" | "sphere" | "plane" | "car" | "face";
 
 interface CreationPlan {
-  readonly shape: PrimitiveShape;
+  readonly shape: CreationShape;
   readonly names: readonly string[];
 }
 
-const SHAPE_ALIASES: Readonly<Record<PrimitiveShape, readonly string[]>> = {
+const SHAPE_ALIASES: Readonly<Record<CreationShape, readonly string[]>> = {
   box: ["큐브", "상자", "박스", "cube", "box"],
   sphere: ["구체", "공", "구", "sphere", "ball"],
   plane: ["평면", "바닥", "plane", "floor"],
+  car: ["자동차", "차량", "승용차", "car", "vehicle"],
+  face: ["사람 얼굴", "얼굴", "두상", "face", "head"],
 };
 
 const COLOR_ALIASES: ReadonlyArray<
@@ -221,7 +223,7 @@ export class RuleBasedProvider implements AIProvider {
     if (!this.includes(input, ["만들", "생성", "추가", "create", "add", "spawn"])) return null;
     const shape = this.shape(input);
     if (!shape) {
-      throw new Error("Object creation requires a box, sphere or plane shape.");
+      throw new Error("Object creation requires a box, sphere, plane, car or face shape.");
     }
     const count = this.creationCount(input);
     const explicitName = this.explicitName(input);
@@ -236,9 +238,9 @@ export class RuleBasedProvider implements AIProvider {
     return { shape, names };
   }
 
-  private shape(input: string): PrimitiveShape | null {
+  private shape(input: string): CreationShape | null {
     for (const [shape, aliases] of Object.entries(SHAPE_ALIASES) as Array<
-      [PrimitiveShape, readonly string[]]
+      [CreationShape, readonly string[]]
     >) {
       if (this.includes(input, aliases)) return shape;
     }
@@ -389,6 +391,7 @@ export class RuleBasedProvider implements AIProvider {
       [["구체", "공", "구", "sphere", "ball"], "sphere"],
       [["평면", "바닥", "plane", "floor"], "plane"],
       [["자동차", "car"], "car"],
+      [["사람 얼굴", "얼굴", "두상", "face", "head"], "face"],
     ];
     for (const [terms, name] of aliases) {
       if (!this.includes(input, terms)) continue;

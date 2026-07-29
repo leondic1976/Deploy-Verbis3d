@@ -10,3 +10,4 @@ export * from "./materials/index.js";
 export * from "./math/index.js";
 export * from "./plugins/index.js";
 export * from "./renderer/index.js";
+export * from "./utilities/index.js";

@@ -14,6 +14,7 @@ export default defineConfig({
         playground: "site/playground.html",
         architecture: "site/architecture.html",
         roadmap: "site/roadmap.html",
+        guideKo: "site/guide-ko.html",
       },
     },
   },

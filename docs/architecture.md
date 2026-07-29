@@ -55,3 +55,11 @@ The alpha is a single package with folders as module boundaries. Imports general
 math → core → cameras/geometry/materials → renderer, with commands/AI/assets/plugins consuming
 public object behavior. Type-only imports prevent lifecycle contracts from introducing runtime
 cycles.
+
+## Independent core boundary
+
+The package has no runtime dependency on a completed 3D engine. ESLint rejects imports from
+Three.js, Babylon.js, PlayCanvas, A-Frame and Cesium, and a unit test checks both runtime
+dependencies and TypeScript source imports. Procedural models are composed from Verbis3D
+`Object3D`, `Mesh`, `BoxGeometry`, `SphereGeometry` and `BasicMaterial`; they do not wrap an
+external scene or renderer.
