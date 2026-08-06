@@ -4,13 +4,18 @@
 
 ### Added
 
+- Application-owned `ModelFactory`, validated `ModelTemplate` contract and `ProceduralModel` part
+  APIs
+- Built-in 21-part person and 7-part tree alongside migrated car and face templates
+- Custom model registry and full-body person learning examples plus a four-model Scene Lab gallery
+- Command-bus model-factory injection and procedural-model type restoration from scene JSON
 - Progressive Beginner, Builder, Advanced and Expert Playground workspaces
 - Natural-language scene creation, multi-object recipes and structured command previews
 - Scene hierarchy editing, undo/redo, motion controls, diagnostics and safe JSON round-trip
 - Viewport object picking, selection marker, orbit/pan/zoom, camera presets and framing
 - Playground provider settings for offline rules, Ollama and OpenAI-compatible endpoints
 - Selection-aware provider context without persistent browser credential storage
-- Eighteen filterable and CI-typechecked learning examples with complete source viewing
+- Twenty filterable and CI-typechecked learning examples with complete source viewing
 - Engine-native 22-part car and 18-part face factories with individually editable children
 - Move/rotate/stretch, procedural car and procedural face Playground presets
 - Detailed Korean setup, modeling, Playground and natural-language/provider documentation

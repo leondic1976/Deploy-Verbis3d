@@ -8,11 +8,13 @@ import engineLoopSource from "../../examples/engine-loop/index.ts?raw";
 import geometryGallerySource from "../../examples/geometry-gallery/index.ts?raw";
 import materialStatesSource from "../../examples/material-states/index.ts?raw";
 import mathTransformSource from "../../examples/math-transform-pipeline/index.ts?raw";
+import modelFactorySource from "../../examples/model-factory/index.ts?raw";
 import naturalLanguageSource from "../../examples/natural-language/index.ts?raw";
 import naturalSceneSource from "../../examples/natural-language-scene/index.ts?raw";
 import pluginLifecycleSource from "../../examples/plugin-lifecycle/index.ts?raw";
 import proceduralCarSource from "../../examples/procedural-car/index.ts?raw";
 import proceduralFaceSource from "../../examples/procedural-face/index.ts?raw";
+import proceduralPersonSource from "../../examples/procedural-person/index.ts?raw";
 import sceneGraphSource from "../../examples/scene-graph/index.ts?raw";
 import serializationSource from "../../examples/serialization-roundtrip/index.ts?raw";
 import structuredCommandsSource from "../../examples/structured-commands/index.ts?raw";
@@ -97,6 +99,16 @@ const examples = [
     playground: "./playground.html?level=builder&preset=car-workshop",
   },
   {
+    id: "model-factory",
+    title: "Extensible model factory",
+    level: "builder",
+    topic: "rendering",
+    description: "Register a custom robot beside the built-in car, person, face and tree.",
+    learning: "Application-owned template catalogs, data-only parts and custom color slots.",
+    source: modelFactorySource,
+    playground: "./playground.html?level=builder&preset=model-gallery",
+  },
+  {
     id: "structured-commands",
     title: "Structured commands",
     level: "builder",
@@ -153,6 +165,16 @@ const examples = [
     learning: "Hierarchical modeling, expression edits and root-level transformation.",
     source: proceduralFaceSource,
     playground: "./playground.html?level=advanced&preset=face-study",
+  },
+  {
+    id: "procedural-person",
+    title: "Editable full-body person",
+    level: "advanced",
+    topic: "animation",
+    description: "Create, pose and recolor a person assembled from 21 selectable parts.",
+    learning: "Stable part IDs, semantic color roles and part-level procedural motion.",
+    source: proceduralPersonSource,
+    playground: "./playground.html?level=advanced&preset=model-gallery",
   },
   {
     id: "natural-language",

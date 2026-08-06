@@ -23,8 +23,8 @@ The offline provider supports deterministic Korean and English intents:
 | Visibility       | `cube hide` / `cube show`       | `setVisible`                      |
 | Duplicate/delete | `cube duplicate` / `cube 삭제`  | permission-checked commands       |
 
-Object creation supports box, sphere and plane primitives plus editable procedural car and face
-hierarchies. Multi-create is capped at ten objects per instruction. Compound-model color changes
+Object creation supports box, sphere and plane primitives plus editable procedural car, person,
+face and tree hierarchies. Multi-create is capped at ten objects per instruction. Compound-model color changes
 apply only to parts marked with the primary color role, preserving windows, wheels, eyes and hair.
 This grammar is intentionally explicit and testable; it is not presented as general language
 understanding.

@@ -3,7 +3,8 @@ import { Object3D } from "../core/Object3D.js";
 import type { Scene } from "../core/Scene.js";
 import { BoxGeometry, PlaneGeometry, SphereGeometry } from "../geometry/index.js";
 import { BasicMaterial } from "../materials/index.js";
-import { createProceduralCar, createProceduralFace } from "../utilities/index.js";
+import { createBuiltinModelFactory } from "../models/index.js";
+import type { ModelFactory } from "../models/index.js";
 import type { EngineCommand } from "./Command.js";
 import type { CommandResult } from "./CommandResult.js";
 
@@ -15,6 +16,8 @@ export interface CommandExecutionContext {
 
 /** Applies validated commands exclusively through public scene/object APIs. */
 export class CommandHandler {
+  constructor(public readonly modelFactory: ModelFactory = createBuiltinModelFactory()) {}
+
   execute(command: EngineCommand, context: CommandExecutionContext, dryRun = false): CommandResult {
     try {
       if (command.command === "createObject") return this.create(command, context, dryRun);
@@ -104,14 +107,11 @@ export class CommandHandler {
           : shape === "box"
             ? new BoxGeometry()
             : null;
-    const object =
-      shape === "car"
-        ? createProceduralCar({ name })
-        : shape === "face"
-          ? createProceduralFace({ name })
-          : geometry
-            ? new Mesh(geometry, new BasicMaterial())
-            : null;
+    const object = geometry
+      ? new Mesh(geometry, new BasicMaterial())
+      : this.modelFactory.has(shape)
+        ? this.modelFactory.create(shape, { name })
+        : null;
     if (!object) return this.error(command, "INVALID_SCHEMA", `Unknown shape '${shape}'.`);
     object.name = name;
     context.scene.add(object);

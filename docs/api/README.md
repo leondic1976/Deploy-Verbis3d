@@ -8,5 +8,6 @@ Primary entry points:
 - Core: Engine, Scene, Object3D, Entity, Component and Mesh
 - Rendering: Renderer and WebGL2Renderer
 - Content: Geometry, primitives, Material and BasicMaterial
-- Procedural content: editable `createProceduralCar` and `createProceduralFace` hierarchies
+- Procedural content: `ProceduralModel`, isolated `ModelFactory` registries, custom templates and
+  editable car/person/face/tree hierarchies
 - Behavior: animation, commands, AI providers, loaders and plugins

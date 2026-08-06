@@ -14,6 +14,7 @@ stable release.
 | Scene graph        | Implemented     | Cycle-safe hierarchy, transforms, traversal and lifecycle tests            |
 | Cameras            | Implemented     | Perspective/orthographic matrices and frustum tests                        |
 | Geometry/material  | Implemented     | Primitive/custom buffers, bounds, unlit material and compound-model tests  |
+| Model library      | Implemented MVP | Isolated template registry; editable car, person, face and tree models     |
 | WebGL2 renderer    | Alpha           | Functional shader/buffer/VAO/indexed draw path; browser-tested cube        |
 | Engine loop        | Implemented     | Fixed/update/render phases, pause/resume and duplicate-start guard         |
 | Animation          | Foundation      | Scalar/vector/quaternion tracks and action playback; no skeletal animation |
@@ -21,7 +22,7 @@ stable release.
 | Natural language   | Implemented MVP | Selection-aware offline rules plus Ollama and compatible API adapters      |
 | Assets/plugins     | Foundation      | JSON scene round-trip, texture load boundary and plugin lifecycle          |
 | Playground         | Implemented     | Picking, camera control, transforms, compound models, JSON and providers   |
-| Learning examples  | Implemented     | 18 filterable, CI-typechecked TypeScript sources with source viewer        |
+| Learning examples  | Implemented     | 20 filterable, CI-typechecked TypeScript sources with source viewer        |
 | Korean docs        | Implemented     | Guided setup, modeling, Playground, natural-language and provider guides   |
 | Documentation site | Implemented     | English/Korean guides, generated API, live demos and checked local links   |
 
@@ -39,7 +40,8 @@ physics, production texture/material pipelines and a WebGPU backend.
 - Structured command bus shared by code and natural-language integrations
 - No `eval`, `new Function`, or generated-script execution
 - JSON scene serialization and explicit plugin lifecycle
-- Editable procedural car and face hierarchies built from engine-native geometry
+- Extensible model factories and editable car, person, face and tree hierarchies built from
+  engine-native geometry
 - Automated guard against completed third-party 3D engine dependencies and imports
 
 ## Install
@@ -84,6 +86,31 @@ const engine = new Engine({ renderer, scene, camera });
 engine.onUpdate((deltaTime) => cube.rotateY(deltaTime));
 engine.start();
 ```
+
+## Procedural object library
+
+Use typed helpers for common models or an application-owned registry for built-in and custom
+templates:
+
+```ts
+import { createBuiltinModelFactory, createProceduralPerson } from "@verbis3d/core";
+
+const person = createProceduralPerson({
+  name: "driver",
+  shirtColor: [0.95, 0.3, 0.12, 1],
+});
+person.getPart("left-upper-arm")?.rotateZ(-0.4);
+scene.add(person);
+
+const models = createBuiltinModelFactory();
+scene.add(models.create("car", { name: "delivery-car" }));
+scene.add(models.create("tree", { name: "street-tree" }));
+```
+
+`ModelFactory` also accepts custom `ModelTemplate` definitions built with `createPrimitiveModel`.
+Registered templates can be exposed to validated `createObject` commands by passing the factory to
+`CommandBus`. See the [model system guide](docs/model-system.md) and the complete
+[model-factory example](examples/model-factory/index.ts).
 
 ## Natural-language commands
 

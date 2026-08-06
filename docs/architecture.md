@@ -30,6 +30,21 @@ flowchart LR
 
 No provider response bypasses validation. The engine never executes generated source code.
 
+## Procedural model flow
+
+```mermaid
+flowchart LR
+  A[Application / Plugin] --> B[ModelFactory]
+  B --> C[Validated ModelTemplate]
+  C --> D[ProceduralModel]
+  D --> E[Object3D + Mesh Parts]
+  E --> F[Scene / Commands / Animation]
+  F --> G[Renderer]
+```
+
+Factories are application-owned rather than global. Built-in and custom models therefore share
+the normal scene graph while catalog contents and command exposure remain explicit.
+
 ## Frame loop
 
 ```mermaid
@@ -52,7 +67,7 @@ sequenceDiagram
 ## Package direction
 
 The alpha is a single package with folders as module boundaries. Imports generally point inward:
-math → core → cameras/geometry/materials → renderer, with commands/AI/assets/plugins consuming
+math → core → cameras/geometry/materials → models/renderer, with commands/AI/assets/plugins consuming
 public object behavior. Type-only imports prevent lifecycle contracts from introducing runtime
 cycles.
 

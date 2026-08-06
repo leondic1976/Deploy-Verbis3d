@@ -1,5 +1,6 @@
 import type { Object3D } from "../core/Object3D.js";
 import type { Scene } from "../core/Scene.js";
+import type { ModelFactory } from "../models/index.js";
 import type { EngineCommand } from "./Command.js";
 import { CommandHandler } from "./CommandHandler.js";
 import { CommandHistory } from "./CommandHistory.js";
@@ -10,13 +11,15 @@ export interface CommandBusOptions {
   allowDelete?: boolean;
   validator?: CommandValidator;
   history?: CommandHistory;
+  /** Model catalog used by `createObject`; defaults to isolated built-in templates. */
+  modelFactory?: ModelFactory;
 }
 
 /** Validates, executes and audits structured engine commands. */
 export class CommandBus {
   readonly validator: CommandValidator;
   readonly history: CommandHistory;
-  readonly handler = new CommandHandler();
+  readonly handler: CommandHandler;
   selectedObject: Object3D | null = null;
   allowDelete: boolean;
 
@@ -26,6 +29,7 @@ export class CommandBus {
   ) {
     this.validator = options.validator ?? new CommandValidator();
     this.history = options.history ?? new CommandHistory();
+    this.handler = new CommandHandler(options.modelFactory);
     this.allowDelete = options.allowDelete ?? false;
   }
 

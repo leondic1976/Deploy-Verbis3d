@@ -18,9 +18,10 @@ import {
   SphereGeometry,
   Vector3,
   WebGL2Renderer,
-  createProceduralCar,
-  createProceduralFace,
+  createBuiltinModelFactory,
 } from "../../src/index.ts";
+
+const modelFactory = createBuiltinModelFactory();
 
 const LEVELS = ["beginner", "builder", "advanced", "expert"];
 const SCENE_PRESETS = [
@@ -28,6 +29,7 @@ const SCENE_PRESETS = [
   "transform-lab",
   "gallery",
   "hierarchy",
+  "model-gallery",
   "car-workshop",
   "face-study",
   "performance",
@@ -452,18 +454,32 @@ if (renderer) {
       scene.add(rig);
       addFloor();
     } else if (name === "car-workshop") {
-      const car = createProceduralCar({ name: "car" });
+      const car = modelFactory.create("car", { name: "car" });
       car.position.y = -1.35;
       car.rotation.y = -Math.PI / 10;
       scene.add(car);
       addFloor();
       preferredSelection = car;
     } else if (name === "face-study") {
-      const face = createProceduralFace({ name: "face" });
+      const face = modelFactory.create("face", { name: "face" });
       face.position.y = -1.35;
       scene.add(face);
       addFloor();
       preferredSelection = face;
+    } else if (name === "model-gallery") {
+      const entries = [
+        ["car", -4.2],
+        ["person", -1.4],
+        ["tree", 1.4],
+        ["face", 4.2],
+      ];
+      for (const [template, x] of entries) {
+        const model = modelFactory.create(template, { name: template });
+        model.position.set(x, -1.35, 0);
+        scene.add(model);
+      }
+      addFloor();
+      preferredSelection = scene.getObjectByName("person") ?? null;
     } else if (name === "performance") {
       for (let row = 0; row < 5; row += 1) {
         for (let column = 0; column < 5; column += 1) {
@@ -1258,8 +1274,7 @@ if (renderer) {
       const template = button.dataset.addModel;
       mutateScene(`Add ${template} model`, () => {
         const name = uniqueName(template);
-        const object =
-          template === "car" ? createProceduralCar({ name }) : createProceduralFace({ name });
+        const object = modelFactory.create(template, { name });
         object.position.y = -1.35;
         scene.add(object);
         selectObject(object, false);

@@ -232,6 +232,12 @@ test("compound models can be created, transformed, selected by part and built wi
   await page.locator(".scene-object-button").filter({ hasText: "car-front-left-wheel" }).click();
   await expect(page.locator("#selected-name")).toHaveText("car-front-left-wheel");
 
+  await page.locator('[data-add-model="person"]').click();
+  await expect(page.locator("#selected-name")).toHaveText("person");
+  await expect(
+    page.locator(".scene-object-button").filter({ hasText: "person-left-hand" }),
+  ).toBeVisible();
+
   await page.locator("#natural-command").fill("사람 얼굴을 만들어 왼쪽으로 1 이동하고 30도 회전");
   await page.getByRole("button", { name: "Validate and run" }).click();
   await expect(page.locator("#command-result")).toHaveText("3 command(s) validated and applied.");
@@ -245,9 +251,9 @@ test("compound models can be created, transformed, selected by part and built wi
 
 test("example library filters and exposes complete verified source", async ({ page }) => {
   await page.goto("./examples.html");
-  await expect(page.locator("#example-count")).toHaveText("18 of 18 examples");
+  await expect(page.locator("#example-count")).toHaveText("20 of 20 examples");
   await page.locator('[data-example-level="expert"]').click();
-  await expect(page.locator("#example-count")).toHaveText("4 of 18 examples");
+  await expect(page.locator("#example-count")).toHaveText("4 of 20 examples");
   await page.getByRole("button", { name: /Natural-language scene recipe/ }).click();
   await expect(page.locator("#source-code")).toContainText("const recipe");
   await expect(page.locator("#source-code")).toContainText("controller.execute");
@@ -315,4 +321,6 @@ test("playground remains usable without horizontal overflow on mobile", async ({
   await page.locator('[data-workspace-level="builder"]').click();
   await expect(page.locator('[data-add-primitive="sphere"]')).toBeVisible();
   await expect(page.locator('[data-add-model="car"]')).toBeVisible();
+  await expect(page.locator('[data-add-model="person"]')).toBeVisible();
+  await expect(page.locator('[data-add-model="tree"]')).toBeVisible();
 });

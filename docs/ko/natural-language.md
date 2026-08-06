@@ -18,7 +18,7 @@ const controller = engine.useNaturalLanguage({
 await controller.execute("파란 자동차를 만들어 오른쪽으로 2 이동하고 30도 회전");
 ```
 
-오프라인 규칙은 box, sphere, plane, car, face 생성을 지원합니다.
+오프라인 규칙은 box, sphere, plane, car, person, face, tree 생성을 지원합니다.
 
 ```text
 빨간 구를 만들어 오른쪽으로 2 이동
