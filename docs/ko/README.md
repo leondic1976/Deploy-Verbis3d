@@ -2,7 +2,7 @@
 
 Verbis3D는 TypeScript와 WebGL2로 직접 구현한 실험 단계의 웹 3D 엔진입니다. Three.js,
 Babylon.js 같은 완성형 엔진을 내부에서 사용하지 않습니다. 현재 버전은
-`0.1.0-alpha.1`이며, 안정 버전 전까지 공개 API가 변경될 수 있습니다.
+`0.2.0-alpha.1`이며, 안정 버전 전까지 공개 API가 변경될 수 있습니다.
 
 ## 무엇부터 읽어야 하나요?
 
@@ -11,8 +11,9 @@ Babylon.js 같은 완성형 엔진을 내부에서 사용하지 않습니다. �
 1. [처음부터 회전하는 큐브까지](getting-started.md)
 2. [장면, 객체, 변형과 복합 모델](scene-and-modeling.md)
 3. [Playground 실습 안내](playground.md)
-4. [자연어 명령과 AI Provider 설정](natural-language.md)
-5. 자동 생성된 [API 문서](../../site/api/index.html)
+4. [여러 사진으로 3D 만들기](../photo-reconstruction.md)
+5. [자연어 명령과 AI Provider 설정](natural-language.md)
+6. 자동 생성된 [API 문서](../../site/api/index.html)
 
 ## 현재 가능한 작업
 
@@ -25,6 +26,7 @@ Babylon.js 같은 완성형 엔진을 내부에서 사용하지 않습니다. �
 - 객체 생성·선택·이동·회전·크기·색상·표시·복제·그룹 명령
 - 한국어/영어 오프라인 자연어 규칙
 - Ollama 및 OpenAI 호환 명령 Provider
+- 오프라인·Ollama·호환 Vision Provider와 여러 사진 기반 visual-hull 메시
 - 자동차와 얼굴을 포함한 편집 가능한 절차적 복합 모델
 - JSON 장면 저장·복원과 플러그인 생명주기
 

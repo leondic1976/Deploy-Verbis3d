@@ -1,6 +1,6 @@
 # Verbis3D documentation
 
-Verbis3D `0.1.0-alpha.1` is a directly implemented TypeScript/WebGL2 engine MVP.
+Verbis3D `0.2.0-alpha.1` is a directly implemented TypeScript/WebGL2 engine alpha.
 
 - [Getting started](getting-started.md)
 - [한국어 문서](ko/README.md)
@@ -11,6 +11,7 @@ Verbis3D `0.1.0-alpha.1` is a directly implemented TypeScript/WebGL2 engine MVP.
 - [Math system](math-system.md)
 - [Animation](animation-system.md)
 - [AI command system](ai-command-system.md)
+- [Multi-photo 3D reconstruction](photo-reconstruction.md)
 - [Progressive Playground](playground.md)
 - [Learning examples](examples.md)
 - [Plugins](plugin-system.md)
@@ -22,4 +23,5 @@ Verbis3D `0.1.0-alpha.1` is a directly implemented TypeScript/WebGL2 engine MVP.
 - [Playground update audit](audit/playground-learning-update.md)
 - [Compound-model and Korean-docs audit](audit/compound-model-korean-docs-update.md)
 - [Object model core audit](audit/object-model-core-audit.md)
+- [Playground and vision reconstruction audit](audit/playground-vision-reconstruction-v2.md)
 - [API overview](api/README.md)

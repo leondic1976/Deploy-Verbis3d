@@ -12,6 +12,7 @@ import modelFactorySource from "../../examples/model-factory/index.ts?raw";
 import naturalLanguageSource from "../../examples/natural-language/index.ts?raw";
 import naturalSceneSource from "../../examples/natural-language-scene/index.ts?raw";
 import pluginLifecycleSource from "../../examples/plugin-lifecycle/index.ts?raw";
+import photoTo3DSource from "../../examples/photo-to-3d/index.ts?raw";
 import proceduralCarSource from "../../examples/procedural-car/index.ts?raw";
 import proceduralFaceSource from "../../examples/procedural-face/index.ts?raw";
 import proceduralPersonSource from "../../examples/procedural-person/index.ts?raw";
@@ -175,6 +176,16 @@ const examples = [
     learning: "Stable part IDs, semantic color roles and part-level procedural motion.",
     source: proceduralPersonSource,
     playground: "./playground.html?level=advanced&preset=model-gallery",
+  },
+  {
+    id: "photo-to-3d",
+    title: "Multi-photo 3D reconstruction",
+    level: "advanced",
+    topic: "rendering",
+    description: "Recognize one object across cardinal views and build validated engine geometry.",
+    learning: "Vision provider adapters, foreground masks, visual hulls and resource validation.",
+    source: photoTo3DSource,
+    playground: "./playground.html?workflow=photos",
   },
   {
     id: "natural-language",

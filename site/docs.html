@@ -34,14 +34,15 @@
         <h2>Core concepts</h2>
         <a href="#math">Math</a><a href="#scene-graph">Scene graph</a><a href="#camera">Camera</a
         ><a href="#renderer">Renderer</a><a href="#geometry">Geometry</a
-        ><a href="#models">Object models</a><a href="#animation">Animation</a
-        ><a href="#commands">Commands & AI</a><a href="#playground">Progressive Playground</a
+        ><a href="#models">Object models</a><a href="#photo-reconstruction">Photos → 3D</a
+        ><a href="#animation">Animation</a><a href="#commands">Commands & AI</a
+        ><a href="#playground">Progressive Playground</a
         ><a href="#plugins-assets">Plugins & assets</a><a href="#testing">Testing</a
         ><a href="./guide-ko.html" lang="ko">한국어 사용 가이드</a
         ><a href="./api/index.html">API reference</a>
       </aside>
       <article class="docs-content">
-        <p class="eyebrow">Documentation / 0.1 alpha</p>
+        <p class="eyebrow">Documentation / 0.2 alpha</p>
         <h1>Build your first Verbis3D scene.</h1>
         <p class="lead">
           The current package is an alpha source release. The examples below match the checked-in
@@ -51,7 +52,7 @@
           <h2>Installation</h2>
           <pre><code>npm install @verbis3d/core</code></pre>
           <div class="callout">
-            <strong>Repository status:</strong> the package API is versioned as 0.1.0-alpha.1;
+            <strong>Repository status:</strong> the package API is versioned as 0.2.0-alpha.1;
             publishing to npm is not part of this release workflow.
           </div>
         </section>
@@ -136,6 +137,32 @@ scene.add(person);</code></pre>
             <a class="button secondary" href="./examples.html">View model source</a>
           </div>
         </section>
+        <section id="photo-reconstruction">
+          <h2>Create 3D from multiple photos</h2>
+          <p>
+            <code>PhotoReconstructionPipeline</code> validates 2–12 decoded views, delegates object
+            recognition and segmentation to a replaceable <code>VisionAIProvider</code>, then builds
+            engine-owned triangle geometry. The included private offline provider uses a contrasting
+            background and cardinal-view visual hull.
+          </p>
+          <pre><code>const pipeline = new PhotoReconstructionPipeline(
+  new RuleBasedVisionProvider()
+);
+const result = await pipeline.reconstruct(
+  [frontPhoto, leftPhoto],
+  { name: "captured-object", resolution: 24 }
+);
+scene.add(result.mesh);</code></pre>
+          <p>
+            Mock, Ollama vision and OpenAI-compatible vision adapters are included. Specialized AI
+            can provide segmentation, depth, pose or a direct mesh through the same validated
+            boundary. The baseline result is a geometric approximation, not a photorealistic NeRF.
+          </p>
+          <div class="actions">
+            <a class="button" href="./playground.html?workflow=photos">Try Photos → 3D</a>
+            <a class="button secondary" href="./examples.html">View reconstruction source</a>
+          </div>
+        </section>
         <section id="animation">
           <h2>Animation</h2>
           <p>
@@ -169,19 +196,20 @@ await controller.execute("큐브를 오른쪽으로 2 이동");</code></pre>
             Scene Lab exposes Beginner, Builder, Advanced and Expert levels without replacing the
             active scene. It combines canvas picking, orbit/pan/zoom, multi-object hierarchy
             editing, selection-aware natural language, optional Ollama or compatible API settings,
-            material state, motion, undo/redo, structured command dry-runs and scene JSON.
+            material state, a guided Photos → 3D workflow, motion, undo/redo, structured command
+            dry-runs and scene JSON.
           </p>
           <div class="actions">
             <a class="button" href="./playground.html">Open Scene Lab</a>
-            <a class="button secondary" href="./examples.html">Browse 20 source examples</a>
+            <a class="button secondary" href="./examples.html">Browse 21 source examples</a>
           </div>
         </section>
         <section id="plugins-assets">
           <h2>Plugins & assets</h2>
           <p>
             Plugins have install/uninstall lifecycle isolation. JSON scenes serialize supported
-            primitives and colors. Texture loading uses <code>createImageBitmap</code>; full glTF
-            support is future work.
+            primitives, validated custom buffer geometry and colors. Texture loading uses
+            <code>createImageBitmap</code>; full glTF support is future work.
           </p>
         </section>
         <section id="testing">

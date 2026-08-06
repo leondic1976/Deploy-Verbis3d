@@ -9,11 +9,16 @@ import {
   Mesh,
   Object3D,
   OllamaProvider,
+  OllamaVisionProvider,
   OpenAICompatibleProvider,
+  OpenAICompatibleVisionProvider,
+  PHOTO_VIEWS,
   PerspectiveCamera,
+  PhotoReconstructionPipeline,
   PlaneGeometry,
   Ray,
   RuleBasedProvider,
+  RuleBasedVisionProvider,
   Scene,
   SphereGeometry,
   Vector3,
@@ -34,6 +39,14 @@ const SCENE_PRESETS = [
   "face-study",
   "performance",
 ];
+const PHOTO_VIEW_LABELS = {
+  front: "Front",
+  back: "Back",
+  left: "Left side",
+  right: "Right side",
+  top: "Top",
+  bottom: "Bottom",
+};
 const LEVEL_CONTENT = {
   beginner: {
     title: "Start with direct edits",
@@ -116,6 +129,7 @@ const inputs = {
 
 const state = {
   selected: null,
+  workflow: "scene",
   level: "beginner",
   undo: [],
   redo: [],
@@ -155,6 +169,23 @@ const state = {
       apiKey: "",
     },
   },
+  photoItems: [],
+  photoBusy: false,
+  photoStage: "photos",
+  lastReconstruction: null,
+  visionProviderMode: "offline",
+  visionProviderSettings: {
+    ollama: {
+      endpoint: "http://127.0.0.1:11434",
+      model: "qwen2.5vl:7b",
+      apiKey: "",
+    },
+    compatible: {
+      endpoint: "",
+      model: "",
+      apiKey: "",
+    },
+  },
   editSnapshot: null,
   lastStatsUpdate: 0,
   framesSinceStats: 0,
@@ -185,7 +216,7 @@ const geometryName = (geometry) => {
   if (geometry instanceof BoxGeometry) return "BoxGeometry";
   if (geometry instanceof SphereGeometry) return "SphereGeometry";
   if (geometry instanceof PlaneGeometry) return "PlaneGeometry";
-  return geometry?.constructor?.name ?? "—";
+  return geometry?.getAttribute ? "BufferGeometry" : "—";
 };
 
 const makeMesh = (shape, name, color, size = 1) => {
@@ -379,6 +410,374 @@ if (renderer) {
       suffix += 1;
     }
     return name;
+  };
+
+  const visionProviderLabels = {
+    offline: "Offline",
+    ollama: "Ollama vision",
+    compatible: "Compatible API",
+  };
+
+  const setWorkflow = (mode) => {
+    if (mode !== "scene" && mode !== "photos") return;
+    state.workflow = mode;
+    const sceneMode = mode === "scene";
+    workspace.dataset.workflow = mode;
+    byId("workspace-bar").dataset.workflow = mode;
+    for (const button of document.querySelectorAll("[data-workflow-mode]")) {
+      button.setAttribute("aria-pressed", String(button.dataset.workflowMode === mode));
+    }
+    for (const element of document.querySelectorAll("[data-scene-workflow]")) {
+      element.hidden = !sceneMode;
+    }
+    byId("photo-workflow").hidden = sceneMode;
+    byId("photo-summary").hidden = sceneMode;
+    byId("photo-preview-banner").hidden = sceneMode;
+    canvas.setAttribute(
+      "aria-label",
+      sceneMode
+        ? "Interactive Verbis3D multi-object scene"
+        : "Interactive preview of the photo-reconstructed 3D object",
+    );
+    if (sceneMode) {
+      setWorkspaceLevel(state.level);
+      activateInspectorTab("object");
+    }
+    requestAnimationFrame(resize);
+  };
+
+  const photoAxis = (view) => {
+    if (view === "front" || view === "back") return "z";
+    if (view === "left" || view === "right") return "x";
+    return "y";
+  };
+
+  const photoCaptureReady = () =>
+    state.photoItems.length >= 2 &&
+    new Set(state.photoItems.map((item) => photoAxis(item.photo.view))).size >= 2;
+
+  const updatePhotoSteps = () => {
+    const order = ["photos", "recognize", "build", "complete"];
+    const currentIndex = order.indexOf(state.photoStage);
+    for (const item of document.querySelectorAll("[data-photo-step]")) {
+      const itemIndex = order.indexOf(item.dataset.photoStep);
+      item.classList.toggle(
+        "complete",
+        itemIndex < currentIndex || state.photoStage === "complete",
+      );
+      if (itemIndex === Math.min(currentIndex, 2) && state.photoStage !== "complete") {
+        item.setAttribute("aria-current", "step");
+      } else {
+        item.removeAttribute("aria-current");
+      }
+    }
+  };
+
+  const updatePhotoControls = () => {
+    const ready = photoCaptureReady();
+    byId("reconstruct-photos").disabled = !ready || state.photoBusy;
+    byId("photo-stat-count").textContent = String(state.photoItems.length);
+    byId("photo-empty").hidden = state.photoItems.length > 0;
+    if (!state.photoBusy && state.photoStage !== "complete") {
+      state.photoStage = ready ? "recognize" : "photos";
+      byId("photo-progress").value = ready ? 10 : 0;
+      byId("photo-progress-label").textContent = ready
+        ? "Views are ready. Choose a provider, then create the object."
+        : "Add at least two perpendicular views.";
+    }
+    updatePhotoSteps();
+  };
+
+  const renderPhotoList = () => {
+    const list = byId("photo-list");
+    list.replaceChildren();
+    for (const item of state.photoItems) {
+      const row = document.createElement("li");
+      row.className = "photo-list-item";
+      const preview = document.createElement("img");
+      preview.src = item.thumbnail;
+      preview.alt = `Preview of ${item.photo.fileName ?? item.photo.id}`;
+      const copy = document.createElement("div");
+      copy.className = "photo-list-copy";
+      const name = document.createElement("strong");
+      name.textContent = item.photo.fileName ?? item.photo.id;
+      const view = document.createElement("select");
+      view.setAttribute("aria-label", `Camera direction for ${name.textContent}`);
+      for (const direction of PHOTO_VIEWS) {
+        const option = document.createElement("option");
+        option.value = direction;
+        option.textContent = PHOTO_VIEW_LABELS[direction];
+        option.selected = item.photo.view === direction;
+        view.append(option);
+      }
+      view.addEventListener("change", () => {
+        item.photo = { ...item.photo, view: view.value };
+        state.photoStage = "photos";
+        updatePhotoControls();
+      });
+      copy.append(name, view);
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "photo-remove";
+      remove.setAttribute("aria-label", `Remove ${name.textContent}`);
+      remove.title = "Remove photo";
+      remove.textContent = "×";
+      remove.addEventListener("click", () => {
+        state.photoItems = state.photoItems.filter(
+          (candidate) => candidate.photo.id !== item.photo.id,
+        );
+        state.photoStage = "photos";
+        renderPhotoList();
+      });
+      row.append(preview, copy, remove);
+      list.append(row);
+    }
+    updatePhotoControls();
+  };
+
+  const nextPhotoView = () => PHOTO_VIEWS[state.photoItems.length % PHOTO_VIEWS.length];
+
+  const decodePhotoFile = async (file, index) => {
+    if (!file.type.match(/^image\/(png|jpeg|webp)$/)) {
+      throw new TypeError(`'${file.name}' is not a supported PNG, JPEG or WebP image.`);
+    }
+    if (file.size > 12 * 1024 * 1024) {
+      throw new RangeError(`'${file.name}' exceeds the 12 MB per-photo limit.`);
+    }
+    const bitmap = await createImageBitmap(file);
+    try {
+      const scale = Math.min(1, 1024 / Math.max(bitmap.width, bitmap.height));
+      const width = Math.max(1, Math.round(bitmap.width * scale));
+      const height = Math.max(1, Math.round(bitmap.height * scale));
+      const sourceCanvas = document.createElement("canvas");
+      sourceCanvas.width = width;
+      sourceCanvas.height = height;
+      const context = sourceCanvas.getContext("2d", { willReadFrequently: true });
+      if (!context) throw new Error("A 2D canvas context is required to decode photos.");
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, width, height);
+      context.drawImage(bitmap, 0, 0, width, height);
+      const image = context.getImageData(0, 0, width, height);
+      const dataUrl = sourceCanvas.toDataURL("image/jpeg", 0.9);
+      return {
+        photo: {
+          id: `photo-${Date.now()}-${index}`,
+          view: nextPhotoView(),
+          width,
+          height,
+          pixels: image.data,
+          dataUrl,
+          fileName: file.name,
+        },
+        thumbnail: dataUrl,
+      };
+    } finally {
+      bitmap.close();
+    }
+  };
+
+  const addPhotoFiles = async (files) => {
+    const result = byId("photo-result");
+    const remaining = 12 - state.photoItems.length;
+    if (remaining <= 0) {
+      result.dataset.state = "error";
+      result.textContent = "Remove a photo before adding another. The limit is 12.";
+      return;
+    }
+    result.dataset.state = "";
+    result.textContent = "Decoding photos locally…";
+    try {
+      const selected = [...files].slice(0, remaining);
+      for (const [index, file] of selected.entries()) {
+        state.photoItems.push(await decodePhotoFile(file, index));
+      }
+      state.photoStage = "photos";
+      result.dataset.state = "success";
+      result.textContent = `${selected.length} photo(s) added. Confirm each camera direction.`;
+      renderPhotoList();
+    } catch (error) {
+      result.dataset.state = "error";
+      result.textContent = error instanceof Error ? error.message : "Photos could not be decoded.";
+    }
+  };
+
+  const createDemoPhoto = (view) => {
+    const sourceCanvas = document.createElement("canvas");
+    sourceCanvas.width = 240;
+    sourceCanvas.height = 320;
+    const context = sourceCanvas.getContext("2d", { willReadFrequently: true });
+    if (!context) throw new Error("A 2D canvas context is required for demo photos.");
+    context.fillStyle = "#f4f7f8";
+    context.fillRect(0, 0, sourceCanvas.width, sourceCanvas.height);
+    context.fillStyle = "#2388c7";
+    if (view === "front") {
+      context.beginPath();
+      context.arc(120, 52, 28, 0, Math.PI * 2);
+      context.fill();
+      context.fillRect(82, 84, 76, 130);
+      context.fillRect(38, 100, 164, 28);
+      context.fillRect(88, 205, 28, 92);
+      context.fillRect(124, 205, 28, 92);
+    } else {
+      context.beginPath();
+      context.arc(120, 52, 25, 0, Math.PI * 2);
+      context.fill();
+      context.fillRect(99, 84, 48, 132);
+      context.fillRect(110, 104, 76, 24);
+      context.fillRect(103, 205, 20, 92);
+      context.fillRect(128, 205, 20, 92);
+    }
+    const image = context.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
+    const dataUrl = sourceCanvas.toDataURL("image/png");
+    return {
+      photo: {
+        id: `demo-${view}`,
+        view,
+        width: sourceCanvas.width,
+        height: sourceCanvas.height,
+        pixels: image.data,
+        dataUrl,
+        fileName: `demo-${view}.png`,
+      },
+      thumbnail: dataUrl,
+    };
+  };
+
+  const loadDemoPhotos = () => {
+    state.photoItems = [createDemoPhoto("front"), createDemoPhoto("left")];
+    byId("photo-object-hint").value = "person";
+    state.photoStage = "photos";
+    byId("photo-result").dataset.state = "success";
+    byId("photo-result").textContent =
+      "Two local demo views are ready. They exercise the real segmentation and mesh pipeline.";
+    renderPhotoList();
+  };
+
+  const saveVisionProviderSettings = (mode) => {
+    if (mode !== "ollama" && mode !== "compatible") return;
+    state.visionProviderSettings[mode] = {
+      endpoint: byId("vision-provider-endpoint").value.trim(),
+      model: byId("vision-provider-model").value.trim(),
+      apiKey: byId("vision-provider-api-key").value,
+    };
+  };
+
+  const setVisionProviderMode = (mode) => {
+    saveVisionProviderSettings(state.visionProviderMode);
+    state.visionProviderMode = mode;
+    const remote = mode === "ollama" || mode === "compatible";
+    byId("vision-remote-fields").hidden = !remote;
+    byId("vision-provider-key-field").hidden = mode !== "compatible";
+    byId("segmentation-threshold-field").hidden = remote;
+    if (remote) {
+      const settings = state.visionProviderSettings[mode];
+      byId("vision-provider-endpoint").value = settings.endpoint;
+      byId("vision-provider-model").value = settings.model;
+      byId("vision-provider-api-key").value = settings.apiKey;
+    }
+    byId("vision-provider-help").textContent =
+      mode === "offline"
+        ? "Runs entirely in this browser. Use photos with a plain, contrasting background."
+        : mode === "ollama"
+          ? "Uses a local multimodal Ollama model. The browser needs endpoint CORS permission."
+          : "Uses a multimodal chat-completions endpoint. Confirm its image-input support.";
+    byId("photo-stat-provider").textContent = visionProviderLabels[mode];
+  };
+
+  const activeVisionProvider = () => {
+    if (state.visionProviderMode === "offline") return new RuleBasedVisionProvider();
+    const endpoint = validateProviderEndpoint(byId("vision-provider-endpoint").value.trim());
+    const model = byId("vision-provider-model").value.trim();
+    if (!model) throw new Error("Vision provider model is required.");
+    saveVisionProviderSettings(state.visionProviderMode);
+    if (state.visionProviderMode === "ollama") {
+      return new OllamaVisionProvider({ baseUrl: endpoint, model });
+    }
+    const apiKey = byId("vision-provider-api-key").value;
+    return new OpenAICompatibleVisionProvider({
+      baseUrl: endpoint,
+      model,
+      ...(apiKey ? { apiKey } : {}),
+    });
+  };
+
+  const reconstructPhotos = async () => {
+    const resultOutput = byId("photo-result");
+    if (!photoCaptureReady()) {
+      resultOutput.dataset.state = "error";
+      resultOutput.textContent = "Add photos from at least two perpendicular directions.";
+      return;
+    }
+    state.photoBusy = true;
+    state.photoStage = "recognize";
+    updatePhotoControls();
+    resultOutput.dataset.state = "";
+    resultOutput.textContent = "Recognizing the object…";
+    const before = sceneSnapshot();
+    try {
+      const provider = activeVisionProvider();
+      const hint = byId("photo-object-hint").value.trim();
+      const name = uniqueName(hint || "photo-object");
+      const pipeline = new PhotoReconstructionPipeline(provider);
+      const reconstruction = await pipeline.reconstruct(
+        state.photoItems.map((item) => item.photo),
+        {
+          name,
+          ...(hint ? { objectHint: hint } : {}),
+          resolution: Number(byId("reconstruction-resolution").value),
+          segmentationThreshold: Number(byId("segmentation-threshold").value),
+          onProgress: (event) => {
+            state.photoStage = event.stage === "analyzing" ? "recognize" : "build";
+            byId("photo-progress").value = Math.round(event.progress * 100);
+            byId("photo-progress-label").textContent = event.message;
+            updatePhotoSteps();
+          },
+        },
+      );
+      const minimumY = reconstruction.mesh.geometry.boundingBox?.min.y ?? -1;
+      reconstruction.mesh.position.y = -1.35 - minimumY;
+      scene.add(reconstruction.mesh);
+      recordHistory(`Reconstruct ${reconstruction.mesh.name} from photos`, before);
+      state.lastReconstruction = reconstruction.mesh;
+      selectObject(reconstruction.mesh, false);
+      frameSelected();
+      refreshWorkspace();
+
+      byId("photo-stat-label").textContent = reconstruction.analysis.label;
+      byId("photo-stat-confidence").textContent = `${Math.round(
+        reconstruction.analysis.confidence * 100,
+      )}%`;
+      byId("photo-stat-method").textContent =
+        reconstruction.stats.method === "visual-hull" ? "Visual hull" : "AI mesh";
+      byId("photo-stat-triangles").textContent =
+        reconstruction.stats.triangleCount.toLocaleString();
+      byId("photo-summary-title").textContent = `${reconstruction.mesh.name} created`;
+      byId("photo-summary-description").textContent =
+        `${provider.name} recognized ${reconstruction.analysis.label}. The generated mesh is selected in the preview.`;
+      byId("edit-reconstruction").disabled = false;
+      resultOutput.dataset.state = "success";
+      resultOutput.textContent = `Created ${reconstruction.stats.triangleCount.toLocaleString()} triangles from ${reconstruction.stats.sourcePhotoCount} photos.`;
+      state.photoStage = "complete";
+      byId("photo-progress").value = 100;
+      byId("photo-progress-label").textContent =
+        "3D object created. Orbit the preview or continue editing in the scene.";
+      logActivity(
+        "reconstruction",
+        `Created ${reconstruction.mesh.name} from photos`,
+        `${provider.name} · ${reconstruction.stats.triangleCount} triangles`,
+      );
+    } catch (error) {
+      state.photoStage = "recognize";
+      resultOutput.dataset.state = "error";
+      resultOutput.textContent =
+        error instanceof Error ? error.message : "Photo reconstruction failed.";
+      byId("photo-progress-label").textContent =
+        "Nothing was added to the scene. Adjust the views or provider and try again.";
+      logActivity("error", "Photo reconstruction failed", resultOutput.textContent);
+    } finally {
+      state.photoBusy = false;
+      updatePhotoControls();
+    }
   };
 
   const addFloor = () => {
@@ -1226,6 +1625,10 @@ if (renderer) {
     button.addEventListener("click", () => setWorkspaceLevel(button.dataset.workspaceLevel));
   }
 
+  for (const button of document.querySelectorAll("[data-workflow-mode]")) {
+    button.addEventListener("click", () => setWorkflow(button.dataset.workflowMode));
+  }
+
   for (const button of document.querySelectorAll("[data-dock-tab]")) {
     button.addEventListener("click", () => activateDockTab(button.dataset.dockTab));
   }
@@ -1493,6 +1896,44 @@ if (renderer) {
     });
   }
 
+  byId("choose-photos").addEventListener("click", () => byId("photo-input").click());
+  byId("photo-input").addEventListener("change", async (event) => {
+    await addPhotoFiles(event.target.files ?? []);
+    event.target.value = "";
+  });
+  byId("load-demo-photos").addEventListener("click", loadDemoPhotos);
+  byId("vision-provider-mode").addEventListener("change", (event) => {
+    setVisionProviderMode(event.target.value);
+  });
+  byId("segmentation-threshold").addEventListener("input", (event) => {
+    byId("segmentation-threshold-value").textContent = event.target.value;
+  });
+  byId("photo-reconstruction-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await reconstructPhotos();
+  });
+  byId("edit-reconstruction").addEventListener("click", () => {
+    setWorkflow("scene");
+    setWorkspaceLevel("builder");
+    if (state.lastReconstruction) selectObject(state.lastReconstruction, false);
+  });
+  const dropZone = byId("photo-drop-zone");
+  for (const eventName of ["dragenter", "dragover"]) {
+    dropZone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      dropZone.dataset.dragging = "true";
+    });
+  }
+  for (const eventName of ["dragleave", "drop"]) {
+    dropZone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      dropZone.dataset.dragging = "false";
+    });
+  }
+  dropZone.addEventListener("drop", async (event) => {
+    await addPhotoFiles(event.dataTransfer?.files ?? []);
+  });
+
   commandForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     commandResult.dataset.state = "";
@@ -1659,6 +2100,7 @@ if (renderer) {
   const requestedCommand = initialParameters.get("command");
   const requestedPreset = initialParameters.get("preset");
   const initialPreset = SCENE_PRESETS.includes(requestedPreset) ? requestedPreset : "starter";
+  const initialWorkflow = initialParameters.get("workflow") === "photos" ? "photos" : "scene";
 
   try {
     loadPreset(initialPreset);
@@ -1670,6 +2112,9 @@ if (renderer) {
     updateCommandTemplate();
     setWorkspaceLevel(initialLevel);
     setProviderMode("rule");
+    setVisionProviderMode("offline");
+    renderPhotoList();
+    setWorkflow(initialWorkflow);
     if (requestedCommand) naturalCommand.value = requestedCommand;
     selectObject(state.selected, false);
     engine.start();

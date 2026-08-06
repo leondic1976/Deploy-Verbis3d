@@ -1,7 +1,13 @@
 import { Mesh } from "../core/Mesh.js";
 import { Object3D } from "../core/Object3D.js";
 import { Scene } from "../core/Scene.js";
-import { BoxGeometry, PlaneGeometry, SphereGeometry } from "../geometry/index.js";
+import {
+  BoxGeometry,
+  BufferAttribute,
+  Geometry,
+  PlaneGeometry,
+  SphereGeometry,
+} from "../geometry/index.js";
 import { BasicMaterial } from "../materials/index.js";
 import { ProceduralModel } from "../models/index.js";
 import { Asset } from "./Asset.js";
@@ -16,9 +22,17 @@ export interface SerializedObject {
   readonly visible: boolean;
   readonly enabled: boolean;
   readonly userData: Record<string, unknown>;
-  readonly geometry?: "box" | "plane" | "sphere";
+  readonly geometry?: "box" | "plane" | "sphere" | SerializedBufferGeometry;
   readonly color?: readonly [number, number, number, number];
   readonly children: readonly SerializedObject[];
+}
+
+/** Data-only representation of validated application-generated triangle geometry. */
+export interface SerializedBufferGeometry {
+  readonly kind: "buffer";
+  readonly position: readonly number[];
+  readonly normal?: readonly number[];
+  readonly index: readonly number[];
 }
 
 export interface SerializedScene {
@@ -91,6 +105,20 @@ export class JSONSceneLoader extends Loader<Scene> {
               ? "sphere"
               : undefined;
       if (geometry) (serialized as { geometry?: string }).geometry = geometry;
+      else {
+        const position = object.geometry.getAttribute("position");
+        const normal = object.geometry.getAttribute("normal");
+        const index = object.geometry.index;
+        if (position && position.itemSize === 3 && index) {
+          const bufferGeometry: SerializedBufferGeometry = {
+            kind: "buffer",
+            position: Array.from(position.array),
+            index: Array.from(index.array),
+            ...(normal && normal.itemSize === 3 ? { normal: Array.from(normal.array) } : {}),
+          };
+          (serialized as { geometry?: SerializedBufferGeometry }).geometry = bufferGeometry;
+        }
+      }
       if (object.material instanceof BasicMaterial) {
         (serialized as { color?: readonly number[] }).color = object.material.color.toArray();
       }
@@ -100,15 +128,15 @@ export class JSONSceneLoader extends Loader<Scene> {
 
   private parseObject(value: unknown): Object3D {
     if (!this.isRecord(value)) throw new Error("Scene object must be an object.");
-    const geometryName = value["geometry"];
+    const geometryValue = value["geometry"];
     const geometry =
-      geometryName === "box"
+      geometryValue === "box"
         ? new BoxGeometry()
-        : geometryName === "plane"
+        : geometryValue === "plane"
           ? new PlaneGeometry()
-          : geometryName === "sphere"
+          : geometryValue === "sphere"
             ? new SphereGeometry()
-            : null;
+            : this.parseBufferGeometry(geometryValue);
     const rawColor = value["color"];
     const color: [number, number, number, number] = this.numberArray(rawColor, 4)
       ? [rawColor[0]!, rawColor[1]!, rawColor[2]!, rawColor[3]!]
@@ -140,6 +168,64 @@ export class JSONSceneLoader extends Loader<Scene> {
     for (const child of value["children"]) object.add(this.parseObject(child));
     if (object instanceof ProceduralModel) object.refreshMetadata();
     return object;
+  }
+
+  private parseBufferGeometry(value: unknown): Geometry | null {
+    if (!this.isRecord(value) || value["kind"] !== "buffer") return null;
+    const position = this.finiteNumberArray(value["position"], 9, 3_000_000, 3, "position");
+    const index = this.finiteNumberArray(value["index"], 3, 6_000_000, 3, "index");
+    const vertexCount = position.length / 3;
+    if (!index.every((item) => Number.isInteger(item) && item >= 0 && item < vertexCount)) {
+      throw new RangeError("Serialized geometry indices must reference existing vertices.");
+    }
+    const geometry = new Geometry().setAttribute(
+      "position",
+      new BufferAttribute(new Float32Array(position), 3),
+    );
+    const normalValue = value["normal"];
+    if (normalValue !== undefined) {
+      const normal = this.finiteNumberArray(
+        normalValue,
+        position.length,
+        position.length,
+        3,
+        "normal",
+      );
+      geometry.setAttribute("normal", new BufferAttribute(new Float32Array(normal), 3));
+    }
+    const maximumIndex = index.reduce((maximum, item) => Math.max(maximum, item), 0);
+    geometry.setIndex(maximumIndex > 65_535 ? new Uint32Array(index) : new Uint16Array(index));
+    geometry.computeBoundingBox();
+    geometry.computeBoundingSphere();
+    return geometry;
+  }
+
+  private finiteNumberArray(
+    value: unknown,
+    minimumLength: number,
+    maximumLength: number,
+    multiple: number,
+    label: string,
+  ): number[] {
+    if (
+      !Array.isArray(value) ||
+      value.length < minimumLength ||
+      value.length > maximumLength ||
+      value.length % multiple !== 0 ||
+      !value.every((item) => typeof item === "number" && Number.isFinite(item))
+    ) {
+      throw new RangeError(
+        `Serialized geometry ${label} data is invalid or exceeds safety limits.`,
+      );
+    }
+    const result: number[] = [];
+    for (const item of value) {
+      if (typeof item !== "number") {
+        throw new TypeError(`Serialized geometry ${label} values must be numbers.`);
+      }
+      result.push(item);
+    }
+    return result;
   }
 
   private numberArray<TLength extends number>(

@@ -7,4 +7,15 @@ validator and permission layer run before mutation. `eval`, `new Function` and g
 execution are not used.
 
 External provider API keys are caller-owned and are never embedded in the static site. The
-offline Playground uses only `RuleBasedProvider`.
+offline Playground uses only `RuleBasedProvider` for commands and `RuleBasedVisionProvider` for
+photo segmentation.
+
+Photo inputs are validated for count, dimensions, decoded RGBA length, total pixels and data-URL
+size before provider work. Vision analysis is validated for source-photo correspondence, mask
+dimensions, normalized bounds, confidence, colors and optional depth. Direct provider meshes are
+limited and checked for finite positions, valid indices and complete triangles before `Geometry`
+allocation. Reconstructed buffer geometry is validated again when scene JSON is imported.
+
+Offline vision never uploads photographs. Ollama and compatible vision modes send selected image
+data to the endpoint explicitly entered by the user. Static browser deployments must not contain
+long-lived production secrets; use a controlled proxy and disclose provider retention policy.

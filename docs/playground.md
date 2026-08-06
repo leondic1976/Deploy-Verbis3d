@@ -3,6 +3,25 @@
 The Scene Lab is a static, offline workspace built on the actual Verbis3D public API. Features are
 revealed progressively so a first-time learner and an engine developer can use the same scene.
 
+The first control selects one of two complete workflows:
+
+- **Scene editor** keeps the progressive object, animation and command workspace.
+- **Photos → 3D** reduces the interface to capture, recognition and reconstruction while keeping the
+  same orbitable WebGL2 preview.
+
+## Photos → 3D workflow
+
+1. Drag or choose 2–12 PNG, JPEG or WebP images of one object.
+2. Assign the actual front, back, left, right, top or bottom camera direction.
+3. Choose private offline segmentation, local Ollama vision or a compatible multimodal endpoint.
+4. Select draft, balanced or detailed surface resolution.
+5. Create the object, inspect confidence and triangle count, then continue in Scene editor.
+
+The **Use demo views** action generates two images locally and runs the real segmentation and
+visual-hull pipeline; it is not a prebuilt 3D asset. Offline mode does not upload photos. Remote
+modes state when photos leave the browser, keep keys only in tab memory and expose connection/CORS
+errors. See [photo-reconstruction.md](photo-reconstruction.md) for the API and capture limits.
+
 ## Levels
 
 | Level    | Primary job                         | Available tools                                                    |
@@ -65,6 +84,7 @@ storage and scene JSON. Production deployments should keep long-lived keys in a 
 - Eight scene presets, including transform, four-model gallery, car, face and 25-object draw-call
   exercises
 - Versioned JSON export/import
+- Reconstructed buffer-geometry JSON round-trip with array and resource validation
 
 ## Current boundaries
 
@@ -73,5 +93,7 @@ gizmos are not implemented. Compound roots use aggregate child bounds for select
 Procedural Playground motion is stored as data in `userData`; the next
 animation update should translate `animateObject` into reusable `AnimationClip` instances. Remote
 provider calls are direct browser requests and therefore depend on provider CORS configuration.
+Photo reconstruction currently uses cardinal-view visual hulls; arbitrary camera poses, textures,
+hidden concavities and photorealistic neural reconstruction are not included.
 The update backlog is tracked in
 [playground-learning-update.md](audit/playground-learning-update.md).

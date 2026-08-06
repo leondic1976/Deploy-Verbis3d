@@ -3,28 +3,29 @@
 Verbis3D is an experimental, AI-native web 3D engine implemented directly in TypeScript and
 WebGL2. It is not a Three.js wrapper and does not use another complete 3D engine internally.
 
-The public API and release process are currently at `0.1.0-alpha.1`. APIs may change before a
+The public API and release process are currently at `0.2.0-alpha.1`. APIs may change before a
 stable release.
 
 ## Current development stage
 
-| Area               | Status          | Evidence                                                                   |
-| ------------------ | --------------- | -------------------------------------------------------------------------- |
-| Math core          | Implemented     | Vector, quaternion, matrix, bounds, ray, plane and frustum tests           |
-| Scene graph        | Implemented     | Cycle-safe hierarchy, transforms, traversal and lifecycle tests            |
-| Cameras            | Implemented     | Perspective/orthographic matrices and frustum tests                        |
-| Geometry/material  | Implemented     | Primitive/custom buffers, bounds, unlit material and compound-model tests  |
-| Model library      | Implemented MVP | Isolated template registry; editable car, person, face and tree models     |
-| WebGL2 renderer    | Alpha           | Functional shader/buffer/VAO/indexed draw path; browser-tested cube        |
-| Engine loop        | Implemented     | Fixed/update/render phases, pause/resume and duplicate-start guard         |
-| Animation          | Foundation      | Scalar/vector/quaternion tracks and action playback; no skeletal animation |
-| Commands           | Implemented MVP | Validation, dry-run, history, permission and ambiguity handling            |
-| Natural language   | Implemented MVP | Selection-aware offline rules plus Ollama and compatible API adapters      |
-| Assets/plugins     | Foundation      | JSON scene round-trip, texture load boundary and plugin lifecycle          |
-| Playground         | Implemented     | Picking, camera control, transforms, compound models, JSON and providers   |
-| Learning examples  | Implemented     | 20 filterable, CI-typechecked TypeScript sources with source viewer        |
-| Korean docs        | Implemented     | Guided setup, modeling, Playground, natural-language and provider guides   |
-| Documentation site | Implemented     | English/Korean guides, generated API, live demos and checked local links   |
+| Area                 | Status          | Evidence                                                                   |
+| -------------------- | --------------- | -------------------------------------------------------------------------- |
+| Math core            | Implemented     | Vector, quaternion, matrix, bounds, ray, plane and frustum tests           |
+| Scene graph          | Implemented     | Cycle-safe hierarchy, transforms, traversal and lifecycle tests            |
+| Cameras              | Implemented     | Perspective/orthographic matrices and frustum tests                        |
+| Geometry/material    | Implemented     | Primitive/custom buffers, bounds, unlit material and compound-model tests  |
+| Model library        | Implemented MVP | Isolated template registry; editable car, person, face and tree models     |
+| WebGL2 renderer      | Alpha           | Functional shader/buffer/VAO/indexed draw path; browser-tested cube        |
+| Engine loop          | Implemented     | Fixed/update/render phases, pause/resume and duplicate-start guard         |
+| Animation            | Foundation      | Scalar/vector/quaternion tracks and action playback; no skeletal animation |
+| Commands             | Implemented MVP | Validation, dry-run, history, permission and ambiguity handling            |
+| Natural language     | Implemented MVP | Selection-aware offline rules plus Ollama and compatible API adapters      |
+| Photo reconstruction | Alpha           | Offline visual hull plus replaceable vision/mesh AI provider adapters      |
+| Assets/plugins       | Foundation      | JSON scene round-trip, texture load boundary and plugin lifecycle          |
+| Playground           | Implemented     | Picking, camera control, transforms, compound models, JSON and providers   |
+| Learning examples    | Implemented     | 21 filterable, CI-typechecked TypeScript sources with source viewer        |
+| Korean docs          | Implemented     | Guided setup, modeling, Playground, natural-language and provider guides   |
+| Documentation site   | Implemented     | English/Korean guides, generated API, live demos and checked local links   |
 
 Planned but not implemented: glTF, skeletal animation, physically based materials, shadows,
 physics, production texture/material pipelines and a WebGPU backend.
@@ -42,6 +43,7 @@ physics, production texture/material pipelines and a WebGPU backend.
 - JSON scene serialization and explicit plugin lifecycle
 - Extensible model factories and editable car, person, face and tree hierarchies built from
   engine-native geometry
+- Validated multi-photo input, offline silhouette reconstruction and replaceable vision AI adapters
 - Automated guard against completed third-party 3D engine dependencies and imports
 
 ## Install
@@ -112,6 +114,26 @@ Registered templates can be exposed to validated `createObject` commands by pass
 `CommandBus`. See the [model system guide](docs/model-system.md) and the complete
 [model-factory example](examples/model-factory/index.ts).
 
+## Multi-photo 3D reconstruction
+
+The `0.2` alpha accepts decoded photographs from at least two perpendicular directions. A provider
+recognizes and segments the object; the included offline backend intersects the silhouettes into an
+indexed visual-hull mesh. Ollama vision, OpenAI-compatible vision and application-defined providers
+use the same validated boundary.
+
+```ts
+const pipeline = new PhotoReconstructionPipeline(new RuleBasedVisionProvider());
+const result = await pipeline.reconstruct([frontPhoto, leftPhoto], {
+  name: "captured-object",
+  resolution: 24,
+});
+scene.add(result.mesh);
+```
+
+The result is geometric approximation rather than a photorealistic NeRF or production retopology.
+See the [photo reconstruction guide](docs/photo-reconstruction.md),
+[complete example](examples/photo-to-3d/index.ts), or open the Playground's **Photos → 3D** mode.
+
 ## Natural-language commands
 
 The offline provider does not need a remote service:
@@ -140,7 +162,8 @@ permission checks before public engine APIs are called.
 
 The progressive [Scene Lab](https://leondic1976.github.io/Deploy-Verbis3d/playground.html) exposes
 beginner direct edits, canvas picking, orbit/pan/zoom camera controls, scene building,
-motion controls, structured commands and safe scene JSON without requiring an external AI service.
+motion controls, a guided Photos → 3D workflow, structured commands and safe scene JSON without
+requiring an external AI service.
 
 ## Architecture
 
@@ -190,6 +213,7 @@ Run the site locally with `npm run site:dev`. Generated API documentation is wri
 - [한국어 문서](docs/ko/README.md)
 - [한국어 웹 가이드](https://leondic1976.github.io/Deploy-Verbis3d/guide-ko.html)
 - [Playground guide](docs/playground.md)
+- [Photo reconstruction](docs/photo-reconstruction.md)
 - [Learning examples](docs/examples.md)
 - [API overview](docs/api/README.md)
 - [Testing](docs/testing.md)
