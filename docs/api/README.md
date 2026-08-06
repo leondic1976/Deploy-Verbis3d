@@ -8,6 +8,8 @@ Primary entry points:
 - Core: Engine, Scene, Object3D, Entity, Component and Mesh
 - Rendering: Renderer and WebGL2Renderer
 - Content: Geometry, primitives, Material, BasicMaterial and VertexColorMaterial
+- Deformation: `MeshDeformer`, deterministic bend/twist/taper/stretch/wave state, normal and bounds
+  reconstruction, GPU revision updates and animation property binding
 - Procedural content: `ProceduralModel`, isolated `ModelFactory` registries, custom templates and
   editable car/person/face/tree hierarchies
 - Reconstruction: `PhotoReconstructionPipeline`, `VisualHullReconstructor`, photo color projection,

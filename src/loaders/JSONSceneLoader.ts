@@ -106,11 +106,11 @@ export class JSONSceneLoader extends Loader<Scene> {
     };
     if (object instanceof Mesh) {
       const geometry =
-        object.geometry instanceof BoxGeometry
+        object.geometry instanceof BoxGeometry && !object.geometry.modified
           ? "box"
-          : object.geometry instanceof PlaneGeometry
+          : object.geometry instanceof PlaneGeometry && !object.geometry.modified
             ? "plane"
-            : object.geometry instanceof SphereGeometry
+            : object.geometry instanceof SphereGeometry && !object.geometry.modified
               ? "sphere"
               : undefined;
       if (geometry) (serialized as { geometry?: string }).geometry = geometry;

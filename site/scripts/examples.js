@@ -8,6 +8,7 @@ import engineLoopSource from "../../examples/engine-loop/index.ts?raw";
 import geometryGallerySource from "../../examples/geometry-gallery/index.ts?raw";
 import materialStatesSource from "../../examples/material-states/index.ts?raw";
 import mathTransformSource from "../../examples/math-transform-pipeline/index.ts?raw";
+import meshDeformationSource from "../../examples/mesh-deformation/index.ts?raw";
 import modelFactorySource from "../../examples/model-factory/index.ts?raw";
 import naturalLanguageSource from "../../examples/natural-language/index.ts?raw";
 import naturalSceneSource from "../../examples/natural-language-scene/index.ts?raw";
@@ -128,6 +129,17 @@ const examples = [
     learning: "AnimationClip, typed tracks, mixer playback, pause and timeline seeking.",
     source: animationSource,
     playground: "./playground.html?level=advanced",
+  },
+  {
+    id: "mesh-deformation",
+    title: "Animated mesh deformation",
+    level: "advanced",
+    topic: "animation",
+    description: "Bend, twist, taper, stretch and wave one mesh without changing its transform.",
+    learning:
+      "Deterministic base geometry, normal and bounds refresh, commands and keyframe paths.",
+    source: meshDeformationSource,
+    playground: "./playground.html?level=advanced&preset=deformation-lab",
   },
   {
     id: "serialization-roundtrip",

@@ -1,6 +1,6 @@
 # Multi-photo 3D reconstruction
 
-Verbis3D `0.3.0-alpha.1` can build an engine-native triangle mesh from multiple photographs of one
+Verbis3D `0.4.0-alpha.1` can build an engine-native triangle mesh from multiple photographs of one
 object. The core separates image input, AI recognition and segmentation, ordered depth/pose
 enhancement, reconstruction, color projection, schema validation and GPU-facing geometry. Provider
 text or generated code is never executed.

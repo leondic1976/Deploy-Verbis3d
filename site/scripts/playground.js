@@ -33,6 +33,7 @@ const LEVELS = ["beginner", "builder", "advanced", "expert"];
 const SCENE_PRESETS = [
   "starter",
   "transform-lab",
+  "deformation-lab",
   "gallery",
   "hierarchy",
   "model-gallery",
@@ -84,6 +85,19 @@ const COMMAND_TEMPLATES = {
     target: { name: target },
     parameters: { x: 0, y: 45, z: 0, unit: "degrees" },
   }),
+  deform: (target) => ({
+    version: "1.0",
+    command: "deformObject",
+    target: { name: target },
+    parameters: {
+      axis: "y",
+      stretch: 1.4,
+      bend: 55,
+      twist: 120,
+      taper: 0.45,
+      unit: "degrees",
+    },
+  }),
   create: () => ({
     version: "1.0",
     command: "createObject",
@@ -126,6 +140,15 @@ const inputs = {
   sx: byId("scale-x"),
   sy: byId("scale-y"),
   sz: byId("scale-z"),
+};
+const deformationInputs = {
+  axis: byId("deformation-axis"),
+  stretch: byId("deformation-stretch"),
+  bend: byId("deformation-bend"),
+  twist: byId("deformation-twist"),
+  taper: byId("deformation-taper"),
+  waveAmplitude: byId("deformation-wave"),
+  waveFrequency: byId("deformation-frequency"),
 };
 
 const state = {
@@ -859,6 +882,30 @@ if (renderer) {
       scene.add(moved, rotated, stretched);
       addFloor();
       preferredSelection = rotated;
+    } else if (name === "deformation-lab") {
+      const base = makeMesh("sphere", "base-shape", [0.2, 0.42, 0.58, 1], 1.55);
+      const sculpture = makeMesh("sphere", "animated-sculpture", [0.18, 0.82, 0.65, 1], 1.55);
+      base.position.set(-2, 0, 0);
+      sculpture.position.set(1.2, 0, 0);
+      sculpture.deformation.configure({
+        axis: "y",
+        stretch: 1.75,
+        bend: Math.PI * 0.4,
+        twist: Math.PI * 0.5,
+        taper: 0.55,
+        waveAmplitude: 0.08,
+        waveFrequency: 2,
+      });
+      sculpture.userData["playgroundDeformation"] = {
+        speed: 0.8,
+        amplitude: 0.65,
+        baseTwist: sculpture.deformation.twist,
+      };
+      sculpture.userData["lesson"] =
+        "The green mesh changes vertices while its Object3D transform remains independent.";
+      scene.add(base, sculpture);
+      addFloor();
+      preferredSelection = sculpture;
     } else if (name === "gallery") {
       const colors = [
         [0.18, 0.72, 1, 1],
@@ -1077,6 +1124,7 @@ if (renderer) {
       updateCommandTemplate();
       byId("scene-json").value = sceneSnapshot();
     }
+    updateInspector();
     logActivity("level", `Workspace level: ${level}`);
   };
 
@@ -1189,6 +1237,22 @@ if (renderer) {
         : "scene";
   };
 
+  const updateDeformationOutputs = () => {
+    byId("deformation-stretch-value").textContent =
+      `${Number(deformationInputs.stretch.value).toFixed(2)}×`;
+    byId("deformation-bend-value").textContent =
+      `${Math.round(Number(deformationInputs.bend.value))}°`;
+    byId("deformation-twist-value").textContent =
+      `${Math.round(Number(deformationInputs.twist.value))}°`;
+    byId("deformation-taper-value").textContent = Number(deformationInputs.taper.value).toFixed(2);
+    byId("deformation-wave-value").textContent = Number(
+      deformationInputs.waveAmplitude.value,
+    ).toFixed(2);
+    byId("deformation-frequency-value").textContent = Number(
+      deformationInputs.waveFrequency.value,
+    ).toFixed(1);
+  };
+
   const updateInspector = () => {
     const object = state.selected;
     if (!object) {
@@ -1197,7 +1261,10 @@ if (renderer) {
       byId("viewport-selection").querySelector("strong").textContent = "None";
       byId("command-target").textContent = "No selection";
       byId("selection-marker").hidden = true;
+      byId("deformation-properties").hidden = true;
       canvas.dataset.selectedObject = "";
+      canvas.dataset.deformation = "none";
+      canvas.dataset.geometryVersion = "";
       return;
     }
     byId("selected-name").textContent = object.name || object.type;
@@ -1218,10 +1285,15 @@ if (renderer) {
     byId("object-id").textContent = String(object.id);
     byId("viewport-selection").querySelector("strong").textContent = object.name || object.type;
     byId("command-target").textContent = object.name || object.type;
+    canvas.dataset.deformation =
+      object instanceof Mesh ? (object.isDeformed ? "active" : "neutral") : "unsupported";
+    canvas.dataset.geometryVersion = object instanceof Mesh ? String(object.geometry.version) : "";
 
     const isMaterialMesh = object instanceof Mesh && object.material instanceof BasicMaterial;
     byId("material-properties").hidden = !isMaterialMesh;
     byId("geometry-summary").hidden = !(object instanceof Mesh);
+    byId("deformation-properties").hidden =
+      !(object instanceof Mesh) || LEVELS.indexOf(state.level) < LEVELS.indexOf("builder");
     if (isMaterialMesh) {
       byId("object-color").value = colorToHex(object.material.color);
       byId("object-opacity").value = String(object.material.color.a);
@@ -1234,11 +1306,25 @@ if (renderer) {
       byId("geometry-name").textContent = geometryName(object.geometry);
       byId("geometry-vertices").textContent = String(object.geometry.vertexCount);
       byId("geometry-indices").textContent = String(object.geometry.index?.count ?? 0);
+      const deformation = object.deformation.snapshot();
+      deformationInputs.axis.value = deformation.axis;
+      deformationInputs.stretch.value = String(deformation.stretch);
+      deformationInputs.bend.value = String((deformation.bend * 180) / Math.PI);
+      deformationInputs.twist.value = String((deformation.twist * 180) / Math.PI);
+      deformationInputs.taper.value = String(deformation.taper);
+      deformationInputs.waveAmplitude.value = String(deformation.waveAmplitude);
+      deformationInputs.waveFrequency.value = String(deformation.waveFrequency);
+      updateDeformationOutputs();
     }
 
     const motion = object.userData["playgroundMotion"];
+    const shapeMotion = object.userData["playgroundDeformation"];
     byId("motion-type").value =
-      typeof motion === "object" && motion ? (motion.type ?? "none") : "none";
+      typeof shapeMotion === "object" && shapeMotion
+        ? "shape"
+        : typeof motion === "object" && motion
+          ? (motion.type ?? "none")
+          : "none";
     byId("motion-speed").value =
       typeof motion === "object" && motion ? String(motion.speed ?? 1) : "1";
     byId("motion-amplitude").value =
@@ -1295,11 +1381,32 @@ if (renderer) {
     completeGuideStep("transform");
   };
 
+  const updateSelectedDeformation = () => {
+    if (!(state.selected instanceof Mesh)) return;
+    state.selected.deformation.configure({
+      axis: deformationInputs.axis.value,
+      stretch: readNumber(deformationInputs.stretch, 1),
+      bend: (readNumber(deformationInputs.bend, 0) * Math.PI) / 180,
+      twist: (readNumber(deformationInputs.twist, 0) * Math.PI) / 180,
+      taper: readNumber(deformationInputs.taper, 0),
+      waveAmplitude: readNumber(deformationInputs.waveAmplitude, 0),
+      waveFrequency: readNumber(deformationInputs.waveFrequency, 1),
+    });
+    const shapeMotion = state.selected.userData["playgroundDeformation"];
+    if (typeof shapeMotion === "object" && shapeMotion) {
+      shapeMotion.baseTwist = state.selected.deformation.twist;
+    }
+    updateDeformationOutputs();
+    canvas.dataset.deformation = state.selected.isDeformed ? "active" : "neutral";
+    canvas.dataset.geometryVersion = String(state.selected.geometry.version);
+    completeGuideStep("transform");
+  };
+
   const cloneEditableObject = (source) => {
     const copy =
       source instanceof Mesh
         ? new Mesh(
-            source.geometry,
+            source.geometry.clone(),
             source.material instanceof BasicMaterial
               ? new BasicMaterial({
                   color: source.material.color.toArray(),
@@ -1363,6 +1470,19 @@ if (renderer) {
         Number(base[2] ?? 0) + Math.sin(playhead * speed) * amplitude,
       );
     }
+  };
+
+  const applyDeformationPose = (object, playhead) => {
+    if (!(object instanceof Mesh)) return;
+    const motion = object.userData["playgroundDeformation"];
+    if (typeof motion !== "object" || !motion) return;
+    const speed = Number(motion.speed ?? 1);
+    const amplitude = Number(motion.amplitude ?? 1);
+    const baseTwist = Number(motion.baseTwist ?? object.deformation.twist);
+    object.deformation.configure({
+      twist: baseTwist + Math.sin(playhead * speed * Math.PI) * amplitude * Math.PI,
+      wavePhase: playhead * speed,
+    });
   };
 
   const updateMotionOutputs = () => {
@@ -1783,6 +1903,29 @@ if (renderer) {
     });
   }
 
+  for (const input of Object.values(deformationInputs)) {
+    input.addEventListener("focus", () => {
+      state.editSnapshot ??= sceneSnapshot();
+    });
+    input.addEventListener("input", updateSelectedDeformation);
+    input.addEventListener("change", () => {
+      updateSelectedDeformation();
+      if (state.editSnapshot) {
+        recordHistory(`Deform ${state.selected?.name || "mesh"}`, state.editSnapshot);
+        state.editSnapshot = null;
+      }
+      updateInspector();
+    });
+  }
+
+  byId("reset-deformation").addEventListener("click", () => {
+    if (!(state.selected instanceof Mesh)) return;
+    mutateScene(`Reset ${state.selected.name || "mesh"} shape`, () => {
+      state.selected.resetDeformation();
+      delete state.selected.userData["playgroundDeformation"];
+    });
+  });
+
   byId("object-name").addEventListener("focus", () => {
     state.editSnapshot = sceneSnapshot();
   });
@@ -1867,12 +2010,26 @@ if (renderer) {
 
   byId("apply-motion").addEventListener("click", () => {
     if (!state.selected) return;
+    const type = byId("motion-type").value;
+    if (type === "shape" && !(state.selected instanceof Mesh)) {
+      commandResult.dataset.state = "error";
+      commandResult.textContent = "Shape motion requires a selected mesh.";
+      return;
+    }
     mutateScene(`Apply motion to ${state.selected.name || state.selected.type}`, () => {
-      const type = byId("motion-type").value;
       if (type === "none") {
         delete state.selected.userData["playgroundMotion"];
+        delete state.selected.userData["playgroundDeformation"];
         delete state.selected.userData["animation"];
+      } else if (type === "shape") {
+        delete state.selected.userData["playgroundMotion"];
+        state.selected.userData["playgroundDeformation"] = {
+          speed: Number(byId("motion-speed").value),
+          amplitude: Number(byId("motion-amplitude").value),
+          baseTwist: state.selected.deformation.twist,
+        };
       } else {
+        delete state.selected.userData["playgroundDeformation"];
         state.selected.userData["playgroundMotion"] = {
           type,
           speed: Number(byId("motion-speed").value),
@@ -1889,7 +2046,10 @@ if (renderer) {
   byId("timeline-scrubber").addEventListener("input", () => {
     state.playhead = Number(byId("timeline-scrubber").value);
     byId("timeline-value").textContent = `${state.playhead.toFixed(1)} s`;
-    scene.traverse((object) => applyMotionPose(object, state.playhead));
+    scene.traverse((object) => {
+      applyMotionPose(object, state.playhead);
+      applyDeformationPose(object, state.playhead);
+    });
   });
 
   byId("play-toggle").addEventListener("click", () => {
@@ -2105,9 +2265,11 @@ if (renderer) {
       state.playhead = (state.playhead + deltaTime) % 10;
       scene.traverse((object) => {
         const motion = object.userData["playgroundMotion"];
-        if (typeof motion !== "object" || !motion) return;
-        if (motion.type === "spin") object.rotateY(deltaTime * Number(motion.speed ?? 1));
-        else applyMotionPose(object, state.playhead);
+        if (typeof motion === "object" && motion) {
+          if (motion.type === "spin") object.rotateY(deltaTime * Number(motion.speed ?? 1));
+          else applyMotionPose(object, state.playhead);
+        }
+        applyDeformationPose(object, state.playhead);
       });
       byId("timeline-scrubber").value = String(state.playhead);
       byId("timeline-value").textContent = `${state.playhead.toFixed(1)} s`;

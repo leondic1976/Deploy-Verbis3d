@@ -331,7 +331,8 @@
             Preset
             <select id="scene-preset">
               <option value="starter">Starter composition</option>
-              <option value="transform-lab">Move · rotate · stretch lab</option>
+              <option value="transform-lab">Move · rotate · scale lab</option>
+              <option value="deformation-lab">Bend · twist · reshape lab</option>
               <option value="gallery">Material gallery</option>
               <option value="hierarchy">Orbital hierarchy</option>
               <option value="model-gallery">Built-in model gallery</option>
@@ -564,6 +565,9 @@
                 Move right
               </button>
               <button type="button" data-command-example="큐브를 45도 회전">Rotate 45°</button>
+              <button type="button" data-command-example="큐브를 90도 휘어 비틀어">
+                Bend and twist
+              </button>
               <button type="button" data-command-example="sphere up 1">Lift sphere</button>
               <button type="button" data-command-example="cube hide">Hide cube</button>
               <button
@@ -617,6 +621,7 @@
                 <select id="command-preset">
                   <option value="move">Move selected object</option>
                   <option value="rotate">Rotate selected object</option>
+                  <option value="deform">Deform selected mesh</option>
                   <option value="create">Create sphere</option>
                   <option value="color">Set material color</option>
                   <option value="duplicate">Duplicate selected object</option>
@@ -837,6 +842,90 @@
             </div>
           </fieldset>
 
+          <fieldset
+            class="property-group"
+            id="deformation-properties"
+            data-min-level="builder"
+            hidden
+          >
+            <legend>Shape deformation</legend>
+            <button id="reset-deformation" class="text-button legend-action" type="button">
+              Reset shape
+            </button>
+            <p class="field-help deformation-help">
+              Changes local mesh vertices. Position, rotation and object scale stay independent.
+            </p>
+            <label for="deformation-axis"
+              >Longitudinal axis
+              <select id="deformation-axis">
+                <option value="x">X axis</option>
+                <option value="y" selected>Y axis</option>
+                <option value="z">Z axis</option>
+              </select>
+            </label>
+            <div class="deformation-grid">
+              <label for="deformation-stretch"
+                >Stretch <output id="deformation-stretch-value">1.00×</output>
+                <input
+                  id="deformation-stretch"
+                  type="range"
+                  min="0.25"
+                  max="3"
+                  step="0.05"
+                  value="1"
+                />
+              </label>
+              <label for="deformation-bend"
+                >Bend <output id="deformation-bend-value">0°</output>
+                <input id="deformation-bend" type="range" min="-180" max="180" step="1" value="0" />
+              </label>
+              <label for="deformation-twist"
+                >Twist <output id="deformation-twist-value">0°</output>
+                <input
+                  id="deformation-twist"
+                  type="range"
+                  min="-360"
+                  max="360"
+                  step="1"
+                  value="0"
+                />
+              </label>
+              <label for="deformation-taper"
+                >Taper <output id="deformation-taper-value">0.00</output>
+                <input
+                  id="deformation-taper"
+                  type="range"
+                  min="-1.8"
+                  max="1.8"
+                  step="0.05"
+                  value="0"
+                />
+              </label>
+              <label for="deformation-wave"
+                >Wave <output id="deformation-wave-value">0.00</output>
+                <input
+                  id="deformation-wave"
+                  type="range"
+                  min="-0.6"
+                  max="0.6"
+                  step="0.01"
+                  value="0"
+                />
+              </label>
+              <label for="deformation-frequency"
+                >Wave cycles <output id="deformation-frequency-value">2.0</output>
+                <input
+                  id="deformation-frequency"
+                  type="range"
+                  min="0.5"
+                  max="6"
+                  step="0.5"
+                  value="2"
+                />
+              </label>
+            </div>
+          </fieldset>
+
           <fieldset class="property-group" id="material-properties">
             <legend>Material</legend>
             <div class="material-row">
@@ -910,6 +999,7 @@
                 <option value="spin">Spin around Y</option>
                 <option value="bob">Vertical bob</option>
                 <option value="orbit">Orbit origin</option>
+                <option value="shape">Shape twist pulse</option>
               </select>
             </label>
             <label for="motion-speed"

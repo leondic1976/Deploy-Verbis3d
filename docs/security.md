@@ -6,6 +6,11 @@ AI provider responses are untrusted. The parser accepts JSON data only; the runt
 validator and permission layer run before mutation. `eval`, `new Function` and generated-script
 execution are not used.
 
+Shape changes use the same allowlisted path. `deformObject` validates the axis, unit and every
+finite numeric parameter before calling `MeshDeformer`; stretch, bend, twist, taper, wave amplitude,
+frequency and phase have explicit bounds. The controller never evaluates formulas or scripts from a
+provider.
+
 External provider API keys are caller-owned and are never embedded in the static site. The
 offline Playground uses only `RuleBasedProvider` for commands and `RuleBasedVisionProvider` for
 photo segmentation.

@@ -22,7 +22,7 @@ npm run site:dev
 ```
 
 로컬 패키지로 시험하려면 `npm run build && npm pack`으로 생성한 `.tgz` 파일을 다른
-프로젝트에서 `npm install 경로/verbis3d-core-0.3.0-alpha.1.tgz`로 설치할 수 있습니다.
+프로젝트에서 `npm install 경로/verbis3d-core-0.4.0-alpha.1.tgz`로 설치할 수 있습니다.
 
 ## 2. HTML과 CSS
 

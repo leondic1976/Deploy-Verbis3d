@@ -31,7 +31,7 @@ work, so cancellation does not add an object to the scene. See
 | Level    | Primary job                         | Available tools                                                    |
 | -------- | ----------------------------------- | ------------------------------------------------------------------ |
 | Beginner | Understand selection and transforms | guided tasks, Inspector, safe natural language                     |
-| Builder  | Assemble a scene                    | primitives, compound models, hierarchy, duplicate, material state  |
+| Builder  | Assemble and reshape a scene        | primitives, hierarchy, material and mesh-deformation controls      |
 | Advanced | Direct behavior                     | procedural motion, timeline preview, camera controls, environment  |
 | Expert   | Inspect engine data                 | structured command dry-run, CommandResult, scene JSON, diagnostics |
 
@@ -48,6 +48,7 @@ Try these in order:
 파란 자동차를 만들어 오른쪽으로 2 이동하고 30도 회전
 사람 얼굴을 만들어 두 배로 키워
 sphere를 두 배로 키우고 계속 회전시켜
+큐브를 90도 휘어 비틀어
 cube hide
 ```
 
@@ -81,12 +82,13 @@ storage and scene JSON. Production deployments should keep long-lived keys in a 
 - Box, sphere, plane, non-rendering groups, a 22-part car, a 21-part person, an 18-part face bust
   and a 7-part tree
 - Position, Euler rotation and scale editing
+- Axis-aware stretch, bend, twist, taper and wave editing with a separate shape reset
 - RGBA material opacity, side, depth-test and depth-write state
-- Spin, bob and orbit metadata with a timeline preview
+- Spin, bob, orbit and animated shape-twist motion with a timeline preview
 - Perspective/front/top camera views and selection framing
 - Background and field-of-view controls
-- Eight scene presets, including transform, four-model gallery, car, face and 25-object draw-call
-  exercises
+- Nine scene presets, including transform, animated deformation, four-model gallery, car, face and
+  25-object draw-call exercises
 - Versioned JSON export/import
 - Reconstructed buffer-geometry JSON round-trip with array and resource validation
 
@@ -101,5 +103,7 @@ Photo reconstruction accepts validated perspective camera poses from custom enha
 photo-derived vertex colors. The bundled UI still asks for cardinal views because it does not ship a
 calibrated pose model. UV texture atlases, hidden concavities and photorealistic neural
 reconstruction are not included.
+Mesh deformation runs on the CPU and targets moderate interactive geometry. JSON preserves the
+baked result but not the original base snapshot and live modifier stack after reload.
 The update backlog is tracked in
 [playground-learning-update.md](audit/playground-learning-update.md).

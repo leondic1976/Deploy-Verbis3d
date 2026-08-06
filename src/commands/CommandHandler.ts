@@ -1,6 +1,7 @@
 import { Mesh } from "../core/Mesh.js";
 import { Object3D } from "../core/Object3D.js";
 import type { Scene } from "../core/Scene.js";
+import type { DeformationState } from "../deformation/index.js";
 import { BoxGeometry, PlaneGeometry, SphereGeometry } from "../geometry/index.js";
 import { BasicMaterial } from "../materials/index.js";
 import { createBuiltinModelFactory } from "../models/index.js";
@@ -46,6 +47,12 @@ export class CommandHandler {
             this.number(command.parameters, "y", target.scale.y),
             this.number(command.parameters, "z", target.scale.z),
           );
+          break;
+        case "deformObject":
+          this.deform(target, command.parameters);
+          break;
+        case "resetDeformation":
+          this.resetDeformation(target);
           break;
         case "setColor":
           this.color(target, command.parameters);
@@ -152,6 +159,38 @@ export class CommandHandler {
       .rotateX(this.number(parameters, "x", 0) * factor)
       .rotateY(this.number(parameters, "y", 0) * factor)
       .rotateZ(this.number(parameters, "z", 0) * factor);
+  }
+
+  private deform(target: Object3D, parameters: Record<string, unknown>): void {
+    const meshes: Mesh[] = [];
+    target.traverse((object) => {
+      if (object instanceof Mesh) meshes.push(object);
+    });
+    if (meshes.length === 0) throw new Error("Target does not contain deformable mesh geometry.");
+    const factor = parameters["unit"] === "degrees" ? Math.PI / 180 : 1;
+    const update: Partial<DeformationState> = {};
+    const axis = parameters["axis"];
+    if (axis === "x" || axis === "y" || axis === "z") update.axis = axis;
+    for (const key of ["stretch", "taper", "waveAmplitude", "waveFrequency"] as const) {
+      const value = parameters[key];
+      if (typeof value === "number") update[key] = value;
+    }
+    for (const key of ["bend", "twist", "wavePhase"] as const) {
+      const value = parameters[key];
+      if (typeof value === "number") update[key] = value * factor;
+    }
+    for (const mesh of meshes) mesh.deformation.configure(update);
+  }
+
+  private resetDeformation(target: Object3D): void {
+    let meshCount = 0;
+    target.traverse((object) => {
+      if (object instanceof Mesh) {
+        object.resetDeformation();
+        meshCount += 1;
+      }
+    });
+    if (meshCount === 0) throw new Error("Target does not contain deformable mesh geometry.");
   }
 
   private color(target: Object3D, parameters: Record<string, unknown>): void {

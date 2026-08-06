@@ -20,6 +20,8 @@ The offline provider supports deterministic Korean and English intents:
 | Rotate           | `큐브를 45도 회전`              | `rotateObject`                    |
 | Motion           | `sphere를 천천히 계속 회전시켜` | `animateObject`                   |
 | Scale            | `큐브를 두 배로 키워`           | `scaleObject`                     |
+| Shape            | `큐브를 90도 휘어 비틀어`       | `deformObject`                    |
+| Shape reset      | `cube의 원래 모양으로 초기화`   | `resetDeformation`                |
 | Visibility       | `cube hide` / `cube show`       | `setVisible`                      |
 | Duplicate/delete | `cube duplicate` / `cube 삭제`  | permission-checked commands       |
 
@@ -44,7 +46,7 @@ flowchart TD
 Safety controls include:
 
 - command allowlist and version check;
-- finite numeric values and configurable movement/rotation/scale bounds;
+- finite numeric values and configurable movement/rotation/scale/deformation bounds;
 - unique target resolution;
 - deletion permission disabled by default;
 - dry-run;

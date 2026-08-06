@@ -30,29 +30,69 @@
     <main id="main" class="docs-layout">
       <aside class="docs-sidebar" aria-label="Documentation sections">
         <h2>Get started</h2>
-        <a href="#get-started">Installation</a><a href="#first-scene">First scene</a>
+        <a href="#choose-path">Choose a workflow</a><a href="#get-started">Installation</a
+        ><a href="#first-scene">First scene</a>
         <h2>Core concepts</h2>
         <a href="#math">Math</a><a href="#scene-graph">Scene graph</a><a href="#camera">Camera</a
         ><a href="#renderer">Renderer</a><a href="#geometry">Geometry</a
-        ><a href="#models">Object models</a><a href="#photo-reconstruction">Photos → 3D</a
-        ><a href="#animation">Animation</a><a href="#commands">Commands & AI</a
-        ><a href="#playground">Progressive Playground</a
-        ><a href="#plugins-assets">Plugins & assets</a><a href="#testing">Testing</a
-        ><a href="./guide-ko.html" lang="ko">한국어 사용 가이드</a
+        ><a href="#deformation">Mesh deformation</a><a href="#models">Object models</a
+        ><a href="#photo-reconstruction">Photos → 3D</a><a href="#animation">Animation</a
+        ><a href="#commands">Commands & AI</a><a href="#playground">Progressive Playground</a
+        ><a href="#plugins-assets">Plugins & assets</a><a href="#troubleshooting">Troubleshooting</a
+        ><a href="#testing">Testing</a><a href="./guide-ko.html" lang="ko">한국어 사용 가이드</a
         ><a href="./api/index.html">API reference</a>
       </aside>
       <article class="docs-content">
-        <p class="eyebrow">Documentation / 0.3 alpha</p>
+        <p class="eyebrow">Documentation / 0.4 alpha</p>
         <h1>Build your first Verbis3D scene.</h1>
         <p class="lead">
           The current package is an alpha source release. The examples below match the checked-in
           public exports.
         </p>
+        <section id="choose-path">
+          <h2>Choose the shortest workflow</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Goal</th>
+                <th>Start here</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Try without code</td>
+                <td>Playground · Builder level</td>
+              </tr>
+              <tr>
+                <td>Move complete objects</td>
+                <td>Move · rotate · scale lab</td>
+              </tr>
+              <tr>
+                <td>Bend or twist a mesh</td>
+                <td>Bend · twist · reshape lab</td>
+              </tr>
+              <tr>
+                <td>Build an application</td>
+                <td>TypeScript public API below</td>
+              </tr>
+              <tr>
+                <td>Connect an AI</td>
+                <td>AIProvider → validated EngineCommand[]</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="actions">
+            <a class="button" href="./playground.html?level=advanced&amp;preset=deformation-lab"
+              >Start the shape lab</a
+            >
+            <a class="button secondary" href="./guide-ko.html" lang="ko">한국어 설명서</a>
+          </div>
+        </section>
         <section id="get-started">
           <h2>Installation</h2>
           <pre><code>npm install @verbis3d/core</code></pre>
           <div class="callout">
-            <strong>Repository status:</strong> the package API is versioned as 0.3.0-alpha.1;
+            <strong>Repository status:</strong> the package API is versioned as 0.4.0-alpha.1;
             publishing to npm is not part of this release workflow.
           </div>
         </section>
@@ -111,6 +151,37 @@ engine.start();</code></pre>
             <code>BasicMaterial</code> uses a solid RGBA uniform. <code>VertexColorMaterial</code>
             renders normalized per-vertex RGBA projected from reconstruction photos.
           </p>
+        </section>
+        <section id="deformation">
+          <h2>Move objects and change their shape</h2>
+          <p>
+            Object transforms move, rotate and scale one local coordinate system.
+            <code>MeshDeformer</code> changes the local vertices themselves. Every edit starts from
+            a captured base shape, then refreshes normals, bounds and the dynamic WebGL2 buffer
+            revision.
+          </p>
+          <pre><code>sculpture.position.set(2, 0, -3);
+sculpture.deformation.configure({
+  axis: "y",
+  stretch: 1.8,
+  bend: Math.PI * 0.45,
+  twist: Math.PI,
+  taper: 0.55,
+  waveAmplitude: 0.08,
+  waveFrequency: 2
+});</code></pre>
+          <p>
+            The same properties are available through validated <code>deformObject</code> commands
+            and scalar animation paths such as <code>deformation.twist</code>. CPU deformation is
+            intended for moderate interactive meshes; skeletal and GPU compute deformation remain
+            future work.
+          </p>
+          <div class="actions">
+            <a class="button" href="./playground.html?level=advanced&amp;preset=deformation-lab"
+              >Open deformation lab</a
+            >
+            <a class="button secondary" href="./examples.html">View deformation source</a>
+          </div>
         </section>
         <section id="models">
           <h2>Procedural object models</h2>
@@ -176,8 +247,8 @@ scene.add(result.mesh);</code></pre>
           <h2>Animation</h2>
           <p>
             Scalar, Vector3 and Quaternion tracks support linear or spherical interpolation. Actions
-            expose play, pause, stop, loop, speed and seek controls. Skeletal animation is not
-            implemented.
+            expose play, pause, stop, loop, speed and seek controls. Numeric tracks can animate
+            deformation accessors and transforms together. Skeletal animation is not implemented.
           </p>
         </section>
         <section id="commands">
@@ -195,8 +266,8 @@ await controller.execute("큐브를 오른쪽으로 2 이동");</code></pre>
 );</code></pre>
           <p>
             The offline grammar can create box, sphere, plane, car, person, face and tree objects,
-            then chain movement, rotation, motion, scale, color, visibility, duplicate or delete
-            operations.
+            then chain movement, rotation, motion, scale, deformation, color, visibility, duplicate
+            or delete operations.
           </p>
         </section>
         <section id="playground">
@@ -206,11 +277,11 @@ await controller.execute("큐브를 오른쪽으로 2 이동");</code></pre>
             active scene. It combines canvas picking, orbit/pan/zoom, multi-object hierarchy
             editing, selection-aware natural language, optional Ollama or compatible API settings,
             material state, a guided Photos → 3D workflow, motion, undo/redo, structured command
-            dry-runs and scene JSON.
+            dry-runs, shape-deformation controls and scene JSON.
           </p>
           <div class="actions">
             <a class="button" href="./playground.html">Open Scene Lab</a>
-            <a class="button secondary" href="./examples.html">Browse 21 source examples</a>
+            <a class="button secondary" href="./examples.html">Browse 22 source examples</a>
           </div>
         </section>
         <section id="plugins-assets">
@@ -220,6 +291,23 @@ await controller.execute("큐브를 오른쪽으로 2 이동");</code></pre>
             primitives, validated custom buffer geometry and colors. Texture loading uses
             <code>createImageBitmap</code>; full glTF support is future work.
           </p>
+        </section>
+        <section id="troubleshooting">
+          <h2>Troubleshooting</h2>
+          <ul>
+            <li>A blank canvas usually means zero CSS size, camera placement or WebGL2 support.</li>
+            <li>
+              Angular bends need geometry with more segments; deformation moves existing vertices.
+            </li>
+            <li><code>TARGET_NOT_FOUND</code> requires an exact, unique object name.</li>
+            <li><code>AMBIGUOUS_TARGET</code> intentionally stops instead of guessing.</li>
+            <li>
+              Reduce vertex count or simultaneous meshes when CPU shape animation is expensive.
+            </li>
+            <li>
+              Alpha scene JSON preserves a baked shape, not its earlier live modifier baseline.
+            </li>
+          </ul>
         </section>
         <section id="testing">
           <h2>Testing</h2>

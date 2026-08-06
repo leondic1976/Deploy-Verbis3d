@@ -3,7 +3,7 @@
 Verbis3D is an experimental, AI-native web 3D engine implemented directly in TypeScript and
 WebGL2. It is not a Three.js wrapper and does not use another complete 3D engine internally.
 
-The public API and release process are currently at `0.3.0-alpha.1`. APIs may change before a
+The public API and release process are currently at `0.4.0-alpha.1`. APIs may change before a
 stable release.
 
 ## Current development stage
@@ -17,13 +17,14 @@ stable release.
 | Model library        | Implemented MVP | Isolated template registry; editable car, person, face and tree models     |
 | WebGL2 renderer      | Alpha           | Functional shader/buffer/VAO/indexed draw path; browser-tested cube        |
 | Engine loop          | Implemented     | Fixed/update/render phases, pause/resume and duplicate-start guard         |
-| Animation            | Foundation      | Scalar/vector/quaternion tracks and action playback; no skeletal animation |
+| Animation            | Alpha           | Transform and deterministic shape-property tracks; no skeletal animation   |
+| Mesh deformation     | Alpha           | Bend, twist, taper, stretch and wave with normals, bounds and GPU refresh  |
 | Commands             | Implemented MVP | Validation, dry-run, history, permission and ambiguity handling            |
 | Natural language     | Implemented MVP | Selection-aware offline rules plus Ollama and compatible API adapters      |
 | Photo reconstruction | Alpha           | Composable vision AI, depth/pose carving, photo color and mesh AI adapters |
 | Assets/plugins       | Foundation      | JSON scene round-trip, texture load boundary and plugin lifecycle          |
 | Playground           | Implemented     | Picking, camera control, transforms, compound models, JSON and providers   |
-| Learning examples    | Implemented     | 21 filterable, CI-typechecked TypeScript sources with source viewer        |
+| Learning examples    | Implemented     | 22 filterable, CI-typechecked TypeScript sources with source viewer        |
 | Korean docs          | Implemented     | Guided setup, modeling, Playground, natural-language and provider guides   |
 | Documentation site   | Implemented     | English/Korean guides, generated API, live demos and checked local links   |
 
@@ -38,6 +39,7 @@ physics, production texture/material pipelines and a WebGPU backend.
 - GLSL ES 3.00 solid-color material and indexed primitive rendering
 - Fixed-step and variable-step engine callbacks
 - Keyframe animation foundation with quaternion slerp
+- Drift-free mesh deformation with a captured base shape and dynamic WebGL2 buffer reuse
 - Structured command bus shared by code and natural-language integrations
 - No `eval`, `new Function`, or generated-script execution
 - JSON scene serialization and explicit plugin lifecycle
@@ -114,6 +116,37 @@ Registered templates can be exposed to validated `createObject` commands by pass
 `CommandBus`. See the [model system guide](docs/model-system.md) and the complete
 [model-factory example](examples/model-factory/index.ts).
 
+## Object movement and shape deformation
+
+Transforms and deformation deliberately use different APIs. A transform moves the complete object;
+the deformation controller changes its local vertices and then rebuilds normals, bounds and GPU
+upload state:
+
+```ts
+const sculpture = new Mesh(
+  new SphereGeometry(1, 32, 18),
+  new BasicMaterial({ color: [0.15, 0.78, 0.66, 1] }),
+);
+
+sculpture.position.set(2, 0, -3);
+sculpture.deformation.configure({
+  axis: "y",
+  stretch: 1.8,
+  bend: Math.PI * 0.45,
+  twist: Math.PI,
+  taper: 0.55,
+  waveAmplitude: 0.08,
+  waveFrequency: 2,
+});
+```
+
+Every edit is evaluated from an immutable base-position snapshot, so repeated updates do not drift.
+`deformObject` and `resetDeformation` expose the same path to validated commands, while
+`NumberKeyframeTrack("deformation.twist", ...)` animates shape and transform properties together.
+See the [mesh deformation guide](docs/mesh-deformation.md), the
+[complete example](examples/mesh-deformation/index.ts), or load the Playground's **Bend · twist ·
+reshape lab** preset.
+
 ## Multi-photo 3D reconstruction
 
 The `0.3` alpha accepts decoded photographs from at least two perpendicular directions. One AI can
@@ -151,6 +184,7 @@ const naturalLanguage = engine.useNaturalLanguage({
 
 await naturalLanguage.execute("빨간 구를 만들어 오른쪽으로 2 이동하고 천천히 회전시켜");
 await naturalLanguage.execute("파란 자동차를 만들어 오른쪽으로 2 이동하고 30도 회전");
+await naturalLanguage.execute("큐브를 90도 휘어 비틀어");
 ```
 
 In the Scene Lab, click an object in the viewport or hierarchy and use phrases such as
@@ -216,7 +250,9 @@ Run the site locally with `npm run site:dev`. Generated API documentation is wri
 ## Documentation and site
 
 - [Getting started](docs/getting-started.md)
+- [English user manual](docs/user-guide.md)
 - [한국어 문서](docs/ko/README.md)
+- [한국어 사용자 설명서](docs/ko/user-guide.md)
 - [한국어 웹 가이드](https://leondic1976.github.io/Deploy-Verbis3d/guide-ko.html)
 - [Playground guide](docs/playground.md)
 - [Photo reconstruction](docs/photo-reconstruction.md)
