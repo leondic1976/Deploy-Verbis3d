@@ -6,9 +6,12 @@ import {
   OpenAICompatibleVisionProvider,
   PhotoReconstructionPipeline,
   RuleBasedVisionProvider,
+  SilhouetteDepthEnhancer,
+  VertexColorMaterial,
   VisionProviderRegistry,
   Scene,
   validateReconstructionMeshData,
+  validateVisionAnalysis,
   validateVisionPhotos,
   type VisionAIProvider,
   type VisionAnalysis,
@@ -41,7 +44,10 @@ describe("photo reconstruction", () => {
       sourcePhotoCount: 2,
       resolution: 12,
     });
-    expect(progress).toEqual(["validating", "analyzing", "reconstructing", "complete"]);
+    expect(progress[0]).toBe("validating");
+    expect(progress).toContain("analyzing");
+    expect(progress).toContain("reconstructing");
+    expect(progress.at(-1)).toBe("complete");
   });
 
   it("rejects insufficient or parallel capture directions before provider work", () => {
@@ -124,7 +130,11 @@ describe("photo reconstruction", () => {
         }),
     };
     const result = await new PhotoReconstructionPipeline(provider).reconstruct(samplePhotos());
-    expect(result.stats).toMatchObject({ method: "provider-mesh", triangleCount: 1 });
+    expect(result.stats).toMatchObject({
+      method: "provider-mesh",
+      triangleCount: 1,
+      meshGeneratorId: "mesh-ai",
+    });
     expect(result.mesh.geometry.getAttribute("normal")?.count).toBe(3);
     expect(() =>
       validateReconstructionMeshData({
@@ -132,6 +142,25 @@ describe("photo reconstruction", () => {
         indices: new Uint16Array([0, 1, 2]),
       }),
     ).toThrow(/finite/);
+  });
+
+  it("combines one recognition AI with an independent specialized mesh generator", async () => {
+    const meshGenerator = {
+      id: "separate-mesh-model",
+      name: "Separate mesh model",
+      generateMesh: () =>
+        Promise.resolve({
+          positions: new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0]),
+          indices: new Uint16Array([0, 1, 2]),
+        }),
+    };
+    const result = await new PhotoReconstructionPipeline(
+      new MockVisionProvider(() => createMockAnalysis()),
+    ).reconstruct(samplePhotos(), { meshGenerator });
+    expect(result.stats).toMatchObject({
+      method: "provider-mesh",
+      meshGeneratorId: "separate-mesh-model",
+    });
   });
 
   it("uses deterministic mock analysis without network access", async () => {
@@ -144,10 +173,103 @@ describe("photo reconstruction", () => {
     expect(result.stats.occupiedVoxelCount).toBeGreaterThan(0);
   });
 
+  it("composes depth enhancement and projects source colors onto the generated mesh", async () => {
+    const photos = samplePhotos();
+    const baseline = await new PhotoReconstructionPipeline(
+      new RuleBasedVisionProvider(),
+    ).reconstruct(photos, { resolution: 10 });
+    const enhanced = await new PhotoReconstructionPipeline(
+      new RuleBasedVisionProvider(),
+    ).reconstruct(photos, {
+      resolution: 10,
+      enhancers: [new SilhouetteDepthEnhancer()],
+      projectColors: true,
+    });
+
+    expect(enhanced.stats.enhancerIds).toEqual(["silhouette-depth"]);
+    expect(enhanced.stats.depthViewCount).toBe(2);
+    expect(enhanced.stats.colorSource).toBe("photo-projected");
+    expect(enhanced.stats.projectedVertexCount).toBeGreaterThan(0);
+    expect(enhanced.stats.occupiedVoxelCount).toBeLessThan(baseline.stats.occupiedVoxelCount ?? 0);
+    expect(enhanced.mesh.material).toBeInstanceOf(VertexColorMaterial);
+    const color = enhanced.mesh.geometry.getAttribute<Uint8Array>("color");
+    expect(color?.normalized).toBe(true);
+    expect(color?.count).toBe(enhanced.mesh.geometry.vertexCount);
+    expect(enhanced.analysis.warnings.join(" ")).toMatch(/silhouette-derived/);
+  });
+
+  it("uses calibrated provider camera poses during carving", async () => {
+    const analysis = createMockAnalysis();
+    const posed: VisionAnalysis = {
+      ...analysis,
+      views: [
+        {
+          ...analysis.views[0]!,
+          cameraPose: {
+            position: [0, 0, 4],
+            target: [0, 0, 0],
+            up: [0, 1, 0],
+            verticalFovRadians: Math.PI / 3,
+            near: 0.1,
+            far: 10,
+            confidence: 0.8,
+          },
+        },
+        analysis.views[1]!,
+      ],
+    };
+    const result = await new PhotoReconstructionPipeline(
+      new MockVisionProvider(() => posed),
+    ).reconstruct(samplePhotos(), { resolution: 8 });
+    expect(result.stats.poseViewCount).toBe(1);
+    expect(result.stats.triangleCount).toBeGreaterThan(0);
+    const invalid: VisionAnalysis = {
+      ...posed,
+      views: [
+        {
+          ...posed.views[0]!,
+          cameraPose: {
+            ...posed.views[0]!.cameraPose!,
+            up: [0, 0, -1],
+          },
+        },
+        posed.views[1]!,
+      ],
+    };
+    expect(() => validateVisionAnalysis(invalid, samplePhotos())).toThrow(/parallel/);
+  });
+
+  it("cancels asynchronous voxel carving through AbortSignal", async () => {
+    const controller = new AbortController();
+    const pending = new PhotoReconstructionPipeline(
+      new MockVisionProvider(() => createMockAnalysis()),
+    ).reconstruct(samplePhotos(), {
+      resolution: 48,
+      yieldEverySlices: 1,
+      signal: controller.signal,
+    });
+    globalThis.setTimeout(() => controller.abort(), 0);
+    await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+  });
+
+  it("rejects duplicate enhancer identities before repeated AI work", async () => {
+    const enhancer = new SilhouetteDepthEnhancer();
+    await expect(
+      new PhotoReconstructionPipeline(
+        new MockVisionProvider(() => createMockAnalysis()),
+      ).reconstruct(samplePhotos(), { enhancers: [enhancer, enhancer] }),
+    ).rejects.toThrow(/configured more than once/);
+  });
+
   it("round-trips reconstructed buffer geometry through validated scene JSON", async () => {
     const result = await new PhotoReconstructionPipeline(new RuleBasedVisionProvider()).reconstruct(
       samplePhotos(),
-      { resolution: 8, name: "scan" },
+      {
+        resolution: 8,
+        name: "scan",
+        enhancers: [new SilhouetteDepthEnhancer()],
+        projectColors: true,
+      },
     );
     const scene = new Scene();
     scene.add(result.mesh);
@@ -158,6 +280,10 @@ describe("photo reconstruction", () => {
     expect((mesh as typeof result.mesh).geometry.vertexCount).toBe(
       result.mesh.geometry.vertexCount,
     );
+    expect((mesh as typeof result.mesh).geometry.getAttribute("color")?.count).toBe(
+      result.mesh.geometry.vertexCount,
+    );
+    expect((mesh as typeof result.mesh).material).toBeInstanceOf(VertexColorMaterial);
     expect(mesh?.userData["photoReconstruction"]).toMatchObject({ method: "visual-hull" });
   });
 });

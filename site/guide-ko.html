@@ -44,7 +44,7 @@
         ><a href="#playground-ko">Playground 실습</a><a href="#troubleshooting">문제 해결</a>
       </aside>
       <article class="docs-content">
-        <p class="eyebrow">한국어 문서 · 0.2 alpha</p>
+        <p class="eyebrow">한국어 문서 · 0.3 alpha</p>
         <h1>Verbis3D를 처음부터 사용해 보세요.</h1>
         <p class="lead">
           설치, WebGL2 장면, 객체 변형, 편집 가능한 자동차·얼굴, 안전한 자연어 명령을 실제 코드
@@ -73,7 +73,7 @@ npm run typecheck
 npm run test
 npm run site:dev</code></pre>
           <p>
-            현재 버전은 <code>0.2.0-alpha.1</code> 소스 릴리스입니다. npm 게시 전이므로 다른
+            현재 버전은 <code>0.3.0-alpha.1</code> 소스 릴리스입니다. npm 게시 전이므로 다른
             프로젝트에서 시험하려면 <code>npm run build &amp;&amp; npm pack</code>으로 로컬 패키지를
             만듭니다.
           </p>
@@ -211,13 +211,18 @@ geometry.computeBoundingSphere();</code></pre>
             <li>객체 전체가 보이고 배경과 대비되는 사진을 2장 이상 준비합니다.</li>
             <li>Front와 Left side처럼 서로 수직인 방향을 지정합니다.</li>
             <li>개인정보가 중요하면 사진을 전송하지 않는 Offline silhouette을 사용합니다.</li>
-            <li>Create 3D object를 실행하고 신뢰도와 삼각형 수를 확인합니다.</li>
+            <li>Depth refinement와 사진 색상 투영 여부를 선택합니다.</li>
+            <li>Create 3D object를 실행하고 depth view, 색상 투영률과 삼각형 수를 확인합니다.</li>
+            <li>작업을 중단하려면 Cancel을 누릅니다. 취소 시 장면은 변경되지 않습니다.</li>
             <li>Edit in scene으로 이동해 위치·회전·재질을 계속 편집합니다.</li>
           </ol>
           <div class="callout">
-            현재 기준 구현은 실루엣 교집합으로 만드는 visual hull입니다. 사진 텍스처, 보이지 않는
-            오목한 부분, NeRF와 자동 리토폴로지는 아직 포함하지 않습니다. 전문 AI는
-            <code>VisionAIProvider</code>로 연결할 수 있습니다.
+            현재 구현은 실루엣과 선택적 depth를 사용하는 visual hull입니다. 기본 depth는 실루엣 기반
+            근사이며 실제 거리 측정값이 아닙니다. 사진 색상은 vertex color로 투영됩니다. 전문
+            인식·깊이·카메라 포즈·메시 AI는
+            <code>VisionAnalysisEnhancer</code>와 <code>VisionMeshGenerator</code>로 조합할 수
+            있습니다. UV 텍스처 아틀라스, 보이지 않는 오목한 부분, NeRF와 자동 리토폴로지는 아직
+            포함하지 않습니다.
           </div>
           <div class="actions">
             <a class="button" href="./playground.html?workflow=photos">사진 3D 실습 열기</a>

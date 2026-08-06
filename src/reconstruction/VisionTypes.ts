@@ -37,6 +37,20 @@ export interface VisionMask {
   readonly data: Uint8Array;
 }
 
+/**
+ * Calibrated perspective camera expressed in normalized reconstruction space.
+ * The object is centered at the origin and fits inside a two-unit bounding cube.
+ */
+export interface VisionCameraPose {
+  readonly position: readonly [number, number, number];
+  readonly target: readonly [number, number, number];
+  readonly up: readonly [number, number, number];
+  readonly verticalFovRadians: number;
+  readonly near: number;
+  readonly far: number;
+  readonly confidence: number;
+}
+
 /** Validated analysis for one photograph. */
 export interface VisionViewAnalysis {
   readonly photoId: string;
@@ -46,6 +60,7 @@ export interface VisionViewAnalysis {
   readonly foregroundColor: VisionColor;
   readonly mask: VisionMask;
   readonly depth?: Float32Array;
+  readonly cameraPose?: VisionCameraPose;
 }
 
 /** Provider-neutral recognition and segmentation output. */
@@ -73,7 +88,8 @@ export interface ReconstructionMeshData {
 
 /** A progress event emitted at stable reconstruction pipeline boundaries. */
 export interface ReconstructionProgress {
-  readonly stage: "validating" | "analyzing" | "reconstructing" | "complete";
+  readonly stage:
+    "validating" | "analyzing" | "enhancing" | "reconstructing" | "projecting" | "complete";
   readonly progress: number;
   readonly message: string;
 }

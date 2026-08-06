@@ -10,7 +10,14 @@ export {
   type PhotoReconstructionResult,
   type PhotoReconstructionStats,
 } from "./PhotoReconstructionPipeline.js";
+export { PhotoColorProjector, type PhotoColorProjectionResult } from "./PhotoColorProjector.js";
 export { RuleBasedVisionProvider } from "./RuleBasedVisionProvider.js";
+export {
+  SilhouetteDepthEnhancer,
+  type SilhouetteDepthEnhancerOptions,
+} from "./SilhouetteDepthEnhancer.js";
+export type { VisionAnalysisEnhancer } from "./VisionAnalysisEnhancer.js";
+export type { VisionMeshGenerator } from "./VisionMeshGenerator.js";
 export { isVisionMeshProvider, type VisionAIProvider } from "./VisionAIProvider.js";
 export {
   PHOTO_VIEWS,
@@ -20,6 +27,7 @@ export {
   type ReconstructionProgress,
   type VisionAnalysis,
   type VisionAnalyzeOptions,
+  type VisionCameraPose,
   type VisionCapability,
   type VisionColor,
   type VisionMask,
@@ -36,6 +44,7 @@ export {
 export { VisionProviderRegistry } from "./VisionProviderRegistry.js";
 export {
   VisualHullReconstructor,
+  type VisualHullProgress,
   type VisualHullOptions,
   type VisualHullResult,
 } from "./VisualHullReconstructor.js";

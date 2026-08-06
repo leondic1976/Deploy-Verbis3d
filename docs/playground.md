@@ -15,12 +15,16 @@ The first control selects one of two complete workflows:
 2. Assign the actual front, back, left, right, top or bottom camera direction.
 3. Choose private offline segmentation, local Ollama vision or a compatible multimodal endpoint.
 4. Select draft, balanced or detailed surface resolution.
-5. Create the object, inspect confidence and triangle count, then continue in Scene editor.
+5. Choose local depth refinement and projected photo colors or a single average color.
+6. Create or cancel the object, inspect depth/color coverage and triangle count, then continue in
+   Scene editor.
 
 The **Use demo views** action generates two images locally and runs the real segmentation and
 visual-hull pipeline; it is not a prebuilt 3D asset. Offline mode does not upload photos. Remote
 modes state when photos leave the browser, keep keys only in tab memory and expose connection/CORS
-errors. See [photo-reconstruction.md](photo-reconstruction.md) for the API and capture limits.
+errors. The Cancel action uses the same `AbortSignal` for provider requests and asynchronous voxel
+work, so cancellation does not add an object to the scene. See
+[photo-reconstruction.md](photo-reconstruction.md) for the API and capture limits.
 
 ## Levels
 
@@ -93,7 +97,9 @@ gizmos are not implemented. Compound roots use aggregate child bounds for select
 Procedural Playground motion is stored as data in `userData`; the next
 animation update should translate `animateObject` into reusable `AnimationClip` instances. Remote
 provider calls are direct browser requests and therefore depend on provider CORS configuration.
-Photo reconstruction currently uses cardinal-view visual hulls; arbitrary camera poses, textures,
-hidden concavities and photorealistic neural reconstruction are not included.
+Photo reconstruction accepts validated perspective camera poses from custom enhancers and uses
+photo-derived vertex colors. The bundled UI still asks for cardinal views because it does not ship a
+calibrated pose model. UV texture atlases, hidden concavities and photorealistic neural
+reconstruction are not included.
 The update backlog is tracked in
 [playground-learning-update.md](audit/playground-learning-update.md).

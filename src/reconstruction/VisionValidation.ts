@@ -3,6 +3,7 @@ import type {
   NormalizedBoundingBox,
   ReconstructionMeshData,
   VisionAnalysis,
+  VisionCameraPose,
   VisionColor,
   VisionMask,
   VisionPhoto,
@@ -176,6 +177,64 @@ function validateView(view: VisionViewAnalysis): void {
       }
     }
   }
+  if (view.cameraPose) validateCameraPose(view.cameraPose, view.photoId);
+}
+
+function validateCameraPose(pose: VisionCameraPose, photoId: string): void {
+  validateVector(pose.position, `View '${photoId}' camera position`);
+  validateVector(pose.target, `View '${photoId}' camera target`);
+  validateVector(pose.up, `View '${photoId}' camera up`);
+  const forward = subtract(pose.target, pose.position);
+  const forwardLength = length(forward);
+  const upLength = length(pose.up);
+  if (forwardLength < 1e-6 || upLength < 1e-6) {
+    throw new RangeError(`View '${photoId}' camera pose contains a zero-length direction.`);
+  }
+  const alignment = Math.abs(dot(forward, pose.up) / (forwardLength * upLength));
+  if (alignment > 0.999) {
+    throw new RangeError(`View '${photoId}' camera up must not be parallel to its view direction.`);
+  }
+  if (
+    !Number.isFinite(pose.verticalFovRadians) ||
+    pose.verticalFovRadians < 0.1 ||
+    pose.verticalFovRadians > 3
+  ) {
+    throw new RangeError(`View '${photoId}' camera field of view must be in the 0.1..3 range.`);
+  }
+  if (
+    !Number.isFinite(pose.near) ||
+    !Number.isFinite(pose.far) ||
+    pose.near <= 0 ||
+    pose.far <= pose.near ||
+    pose.far > 100_000
+  ) {
+    throw new RangeError(`View '${photoId}' camera near/far range is invalid.`);
+  }
+  assertUnit(pose.confidence, `View '${photoId}' camera confidence`);
+}
+
+function validateVector(value: readonly number[], label: string): void {
+  if (
+    value.length !== 3 ||
+    value.some((component) => !Number.isFinite(component) || Math.abs(component) > 100_000)
+  ) {
+    throw new RangeError(`${label} must contain three finite, bounded components.`);
+  }
+}
+
+function subtract(
+  a: readonly [number, number, number],
+  b: readonly [number, number, number],
+): readonly [number, number, number] {
+  return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+}
+
+function length(value: readonly [number, number, number]): number {
+  return Math.hypot(value[0], value[1], value[2]);
+}
+
+function dot(a: readonly [number, number, number], b: readonly [number, number, number]): number {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
 function validateMask(mask: VisionMask, photoId: string): void {

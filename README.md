@@ -3,7 +3,7 @@
 Verbis3D is an experimental, AI-native web 3D engine implemented directly in TypeScript and
 WebGL2. It is not a Three.js wrapper and does not use another complete 3D engine internally.
 
-The public API and release process are currently at `0.2.0-alpha.1`. APIs may change before a
+The public API and release process are currently at `0.3.0-alpha.1`. APIs may change before a
 stable release.
 
 ## Current development stage
@@ -13,14 +13,14 @@ stable release.
 | Math core            | Implemented     | Vector, quaternion, matrix, bounds, ray, plane and frustum tests           |
 | Scene graph          | Implemented     | Cycle-safe hierarchy, transforms, traversal and lifecycle tests            |
 | Cameras              | Implemented     | Perspective/orthographic matrices and frustum tests                        |
-| Geometry/material    | Implemented     | Primitive/custom buffers, bounds, unlit material and compound-model tests  |
+| Geometry/material    | Implemented     | Primitive/custom buffers, vertex color, bounds and compound-model tests    |
 | Model library        | Implemented MVP | Isolated template registry; editable car, person, face and tree models     |
 | WebGL2 renderer      | Alpha           | Functional shader/buffer/VAO/indexed draw path; browser-tested cube        |
 | Engine loop          | Implemented     | Fixed/update/render phases, pause/resume and duplicate-start guard         |
 | Animation            | Foundation      | Scalar/vector/quaternion tracks and action playback; no skeletal animation |
 | Commands             | Implemented MVP | Validation, dry-run, history, permission and ambiguity handling            |
 | Natural language     | Implemented MVP | Selection-aware offline rules plus Ollama and compatible API adapters      |
-| Photo reconstruction | Alpha           | Offline visual hull plus replaceable vision/mesh AI provider adapters      |
+| Photo reconstruction | Alpha           | Composable vision AI, depth/pose carving, photo color and mesh AI adapters |
 | Assets/plugins       | Foundation      | JSON scene round-trip, texture load boundary and plugin lifecycle          |
 | Playground           | Implemented     | Picking, camera control, transforms, compound models, JSON and providers   |
 | Learning examples    | Implemented     | 21 filterable, CI-typechecked TypeScript sources with source viewer        |
@@ -43,7 +43,7 @@ physics, production texture/material pipelines and a WebGPU backend.
 - JSON scene serialization and explicit plugin lifecycle
 - Extensible model factories and editable car, person, face and tree hierarchies built from
   engine-native geometry
-- Validated multi-photo input, offline silhouette reconstruction and replaceable vision AI adapters
+- Validated multi-photo input, composable AI stages, depth/pose carving and photo color projection
 - Automated guard against completed third-party 3D engine dependencies and imports
 
 ## Install
@@ -116,21 +116,27 @@ Registered templates can be exposed to validated `createObject` commands by pass
 
 ## Multi-photo 3D reconstruction
 
-The `0.2` alpha accepts decoded photographs from at least two perpendicular directions. A provider
-recognizes and segments the object; the included offline backend intersects the silhouettes into an
-indexed visual-hull mesh. Ollama vision, OpenAI-compatible vision and application-defined providers
-use the same validated boundary.
+The `0.3` alpha accepts decoded photographs from at least two perpendicular directions. One AI can
+recognize and segment the object, independent enhancers can add depth or camera calibration, and an
+optional specialized model can generate the final mesh. Without a mesh model, the engine builds a
+depth-aware indexed visual hull. Every stage returns validated data rather than executable code.
 
 ```ts
+const abortController = new AbortController();
 const pipeline = new PhotoReconstructionPipeline(new RuleBasedVisionProvider());
 const result = await pipeline.reconstruct([frontPhoto, leftPhoto], {
   name: "captured-object",
   resolution: 24,
+  enhancers: [new SilhouetteDepthEnhancer()],
+  projectColors: true,
+  signal: abortController.signal,
 });
 scene.add(result.mesh);
 ```
 
-The result is geometric approximation rather than a photorealistic NeRF or production retopology.
+The local depth pass is silhouette-derived rather than measured metric depth, and vertex colors are
+a lightweight projection rather than a UV texture atlas. The result remains a geometric
+approximation rather than a photorealistic NeRF or production retopology.
 See the [photo reconstruction guide](docs/photo-reconstruction.md),
 [complete example](examples/photo-to-3d/index.ts), or open the Playground's **Photos → 3D** mode.
 

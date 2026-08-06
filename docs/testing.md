@@ -12,8 +12,9 @@ npm run test:e2e
 
 Unit tests cover math, transforms, hierarchy, cameras, primitives, materials, animation,
 validation, natural-language creation, compound-model hierarchy/round-trip, vision photo limits,
-offline segmentation, visual-hull geometry, remote vision payloads, provider mesh validation and
-buffer-geometry round-trip.
+offline segmentation, depth/pose carving, cancellable asynchronous visual hulls, source-photo
+vertex colors, remote vision payloads, independent mesh generators and color-aware geometry
+round-trip.
 Integration tests cover engine scheduling, plugin lifecycle, serialization, asset caching and
 scene-to-render-list behavior. An independence test rejects completed third-party 3D engine runtime
 dependencies and source imports.
@@ -21,7 +22,8 @@ dependencies and source imports.
 The Chromium E2E suite checks navigation, WebGL2 initialization, draw readiness, responsive
 layout, all four Playground levels, undo/redo, structured command dry-runs, natural-language scene
 creation, procedural car/person/face/tree editing, selected-object context, mocked Ollama transport,
-photo-workflow demo reconstruction, vision provider privacy controls, viewport picking, orbit/zoom,
+photo-workflow demo reconstruction and cancellation, depth/color diagnostics, vision provider
+privacy controls, viewport picking, orbit/zoom,
 the Korean guide, example source viewer and console errors. It avoids pixel snapshots because
 virtual GPU output varies.
 

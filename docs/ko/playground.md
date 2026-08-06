@@ -17,16 +17,20 @@
    - Offline silhouette: 사진을 업로드하지 않는 브라우저 기준 구현
    - Ollama vision: 로컬 멀티모달 모델
    - OpenAI-compatible vision API: 설정한 호환 endpoint
-5. Surface detail을 선택하고 `Create 3D object`를 실행합니다.
-6. 인식 이름, 신뢰도, 생성 삼각형 수를 확인한 후 `Edit in scene`으로 편집을 계속합니다.
+5. Surface detail과 Depth refinement, 사진 색상 투영 여부를 선택합니다.
+6. `Create 3D object`를 실행합니다. 중단하려면 `Cancel`을 누릅니다.
+7. 인식 이름, 신뢰도, depth view, 색상 투영률과 삼각형 수를 확인한 후 `Edit in scene`으로
+   편집을 계속합니다.
 
 최소한 정면과 측면처럼 서로 수직인 두 방향이 필요합니다. 배경이 단순하고 객체와 대비가
 클수록 오프라인 인식 결과가 좋아집니다. `Use demo views`는 미리 만든 3D 객체를 불러오는
 것이 아니라 브라우저에서 예제 사진을 만들고 실제 인식·메시 생성 파이프라인을 실행합니다.
 
-현재 결과는 사진 실루엣의 교집합을 사용하는 visual hull입니다. 보이지 않는 오목한 부분,
-사진 텍스처, NeRF, Gaussian splatting, 자동 리토폴로지는 포함하지 않습니다. 전문 인식·깊이·
-메시 AI는 `VisionAIProvider`로 교체할 수 있습니다.
+현재 결과는 실루엣과 선택적 depth를 사용하는 visual hull입니다. 기본 depth는 실루엣
+경계에서 계산한 형태 근사이며 실제 거리 측정값이 아닙니다. 사진 색상은 vertex color로
+투영되며 UV 텍스처 아틀라스는 아닙니다. 전문 인식 AI, `VisionAnalysisEnhancer` 기반 깊이·
+카메라 포즈 AI와 독립 `VisionMeshGenerator`를 조합할 수 있습니다. 보이지 않는 오목한 부분,
+NeRF, Gaussian splatting, 자동 리토폴로지는 포함하지 않습니다.
 
 ## 10분 학습 순서
 
