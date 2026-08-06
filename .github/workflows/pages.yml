@@ -45,6 +45,10 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # GitHub Pages deployments can remain queued beyond the action's
+          # 10-minute default even after the artifact upload succeeds.
+          timeout: 1200000
 
   verify:
     runs-on: ubuntu-latest
