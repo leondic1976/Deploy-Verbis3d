@@ -1,5 +1,16 @@
 # Roadmap
 
+## 0.4.0-alpha.1 mesh deformation
+
+- deterministic base-shape evaluation for stretch, bend, twist, taper and wave;
+- normal, bounds and dynamic WebGL2 buffer refresh after vertex edits;
+- allowlisted deformation commands and offline Korean/English shape phrases;
+- scalar keyframe binding for animated deformation properties;
+- interactive deformation lab, example, API guide and browser coverage.
+
+The current CPU backend is intentionally bounded. Base-state scene serialization, morph-target
+authoring, skeletal skinning, worker scheduling and GPU/WebGPU deformation remain future work.
+
 ## 0.1.0-alpha.1
 
 Direct math, scene graph, cameras, primitive geometry, basic material, WebGL2 renderer, engine
@@ -17,7 +28,7 @@ documentation site.
 - structured command preview and dry-run;
 - editable 22-part car, 21-part person, 18-part face and 7-part tree hierarchies;
 - move/rotate/stretch, car and face learning presets;
-- 21 filterable, typechecked learning sources;
+- 22 filterable, typechecked learning sources;
 - detailed Korean setup, modeling, Playground and provider guides.
 
 ## 0.2.0-alpha.1 photo reconstruction

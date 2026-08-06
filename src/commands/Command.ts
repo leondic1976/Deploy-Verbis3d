@@ -5,6 +5,8 @@ export const COMMAND_NAMES = [
   "moveObject",
   "rotateObject",
   "scaleObject",
+  "deformObject",
+  "resetDeformation",
   "setColor",
   "setVisible",
   "animateObject",

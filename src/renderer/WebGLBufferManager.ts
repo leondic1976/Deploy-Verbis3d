@@ -8,9 +8,22 @@ export interface GeometryBinding {
   readonly indexType: number;
 }
 
+interface ManagedGeometryBinding extends GeometryBinding {
+  version: number;
+  readonly attributeBuffers: Map<string, ManagedAttributeBinding>;
+  readonly indexBuffer: WebGLBuffer | null;
+}
+
+interface ManagedAttributeBinding {
+  readonly buffer: WebGLBuffer;
+  readonly itemSize: number;
+  readonly normalized: boolean;
+  readonly type: number;
+}
+
 /** Uploads Geometry attributes and configures program-specific VAOs. */
 export class WebGLBufferManager {
-  private readonly bindings = new WeakMap<Geometry, Map<WebGLProgram, GeometryBinding>>();
+  private readonly bindings = new WeakMap<Geometry, Map<WebGLProgram, ManagedGeometryBinding>>();
 
   constructor(
     private readonly gl: WebGL2RenderingContext,
@@ -24,12 +37,21 @@ export class WebGLBufferManager {
       this.bindings.set(geometry, byProgram);
     }
     const cached = byProgram.get(program);
-    if (cached && geometry.uploaded) return cached;
+    if (cached && cached.version === geometry.version) return cached;
+    if (cached && this.canRefresh(cached, geometry, program)) {
+      this.refresh(cached, geometry);
+      return cached;
+    }
+    if (cached) {
+      this.release(cached);
+      byProgram.delete(program);
+    }
 
     const vertexArray = this.gl.createVertexArray();
     if (!vertexArray) throw new Error("WebGL could not allocate a vertex array.");
     this.resources.trackVertexArray(vertexArray);
     this.gl.bindVertexArray(vertexArray);
+    const attributeBuffers = new Map<string, ManagedAttributeBinding>();
     for (const [name, attribute] of geometry.attributes) {
       const shaderName = this.attributeName(name);
       const location = this.gl.getAttribLocation(program, shaderName);
@@ -37,22 +59,23 @@ export class WebGLBufferManager {
       const buffer = this.gl.createBuffer();
       if (!buffer) throw new Error(`WebGL could not allocate the '${name}' vertex buffer.`);
       this.resources.trackBuffer(buffer);
+      const type = this.attributeType(attribute.array);
+      attributeBuffers.set(name, {
+        buffer,
+        itemSize: attribute.itemSize,
+        normalized: attribute.normalized,
+        type,
+      });
       this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
-      this.gl.bufferData(this.gl.ARRAY_BUFFER, attribute.array, this.gl.STATIC_DRAW);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, attribute.array, this.gl.DYNAMIC_DRAW);
       this.gl.enableVertexAttribArray(location);
-      this.gl.vertexAttribPointer(
-        location,
-        attribute.itemSize,
-        this.attributeType(attribute.array),
-        attribute.normalized,
-        0,
-        0,
-      );
+      this.gl.vertexAttribPointer(location, attribute.itemSize, type, attribute.normalized, 0, 0);
     }
     let count = geometry.vertexCount;
     let indexType: number = this.gl.UNSIGNED_SHORT;
+    let indexBuffer: WebGLBuffer | null = null;
     if (geometry.index) {
-      const indexBuffer = this.gl.createBuffer();
+      indexBuffer = this.gl.createBuffer();
       if (!indexBuffer) throw new Error("WebGL could not allocate the index buffer.");
       this.resources.trackBuffer(indexBuffer);
       this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -67,10 +90,74 @@ export class WebGLBufferManager {
       count,
       indexed: geometry.index !== null,
       indexType,
+      version: geometry.version,
+      attributeBuffers,
+      indexBuffer,
     };
     byProgram.set(program, binding);
     geometry.markUploaded();
     return binding;
+  }
+
+  private canRefresh(
+    binding: ManagedGeometryBinding,
+    geometry: Geometry,
+    program: WebGLProgram,
+  ): boolean {
+    const expectedCount = geometry.index?.count ?? geometry.vertexCount;
+    if (binding.count !== expectedCount || binding.indexed !== (geometry.index !== null)) {
+      return false;
+    }
+    if (
+      geometry.index &&
+      binding.indexType !==
+        (geometry.index.array instanceof Uint32Array
+          ? this.gl.UNSIGNED_INT
+          : this.gl.UNSIGNED_SHORT)
+    ) {
+      return false;
+    }
+    for (const [name, managed] of binding.attributeBuffers) {
+      const attribute = geometry.attributes.get(name);
+      if (
+        !attribute ||
+        attribute.itemSize !== managed.itemSize ||
+        attribute.normalized !== managed.normalized ||
+        this.attributeType(attribute.array) !== managed.type
+      ) {
+        return false;
+      }
+    }
+    for (const [name] of geometry.attributes) {
+      const isActive = this.gl.getAttribLocation(program, this.attributeName(name)) >= 0;
+      if (isActive && !binding.attributeBuffers.has(name)) return false;
+    }
+    return true;
+  }
+
+  private refresh(binding: ManagedGeometryBinding, geometry: Geometry): void {
+    this.gl.bindVertexArray(binding.vertexArray);
+    for (const [name, managed] of binding.attributeBuffers) {
+      const attribute = geometry.attributes.get(name);
+      if (!attribute) continue;
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, managed.buffer);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, attribute.array, this.gl.DYNAMIC_DRAW);
+    }
+    if (binding.indexBuffer && geometry.index) {
+      this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, binding.indexBuffer);
+      this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, geometry.index.array, this.gl.DYNAMIC_DRAW);
+    }
+    this.gl.bindVertexArray(null);
+    binding.version = geometry.version;
+    geometry.markUploaded();
+  }
+
+  private release(binding: ManagedGeometryBinding): void {
+    for (const managed of binding.attributeBuffers.values()) {
+      this.resources.releaseBuffer(managed.buffer);
+    }
+    if (binding.indexBuffer) this.resources.releaseBuffer(binding.indexBuffer);
+    this.resources.releaseVertexArray(binding.vertexArray);
   }
 
   private attributeName(name: string): string {

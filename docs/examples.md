@@ -1,6 +1,6 @@
 # Learning examples
 
-The Examples site exposes 21 complete TypeScript sources. `tsconfig.examples.json` checks them in
+The Examples site exposes 22 complete TypeScript sources. `tsconfig.examples.json` checks them in
 CI so the catalog cannot silently drift away from public exports.
 
 ## Suggested order
@@ -16,13 +16,14 @@ CI so the catalog cannot silently drift away from public exports.
 9. Extensible model factory
 10. Structured commands
 11. Keyframe animation
-12. Editable procedural face
-13. Editable full-body person
-14. Scene JSON round-trip
-15. Asset cache and plugin lifecycle
-16. Natural-language creation and scene recipes
-17. Multi-photo 3D reconstruction
-18. Command safety and custom provider adapters
+12. Animated mesh deformation
+13. Editable procedural face
+14. Editable full-body person
+15. Scene JSON round-trip
+16. Asset cache and plugin lifecycle
+17. Natural-language creation and scene recipes
+18. Multi-photo 3D reconstruction
+19. Command safety and custom provider adapters
 
 Use the level and topic filters to narrow the catalog. The source viewer supports copying the
 complete file and links to the matching repository directory. Examples that have an interactive
@@ -36,3 +37,6 @@ third-party 3D engine.
 photo vertex colors and cancellation. Pass any `VisionAIProvider` to use the offline baseline,
 Ollama or a compatible endpoint; add ordered `VisionAnalysisEnhancer` stages and an independent
 `VisionMeshGenerator` for application-specific depth, pose and geometry services.
+
+`mesh-deformation` demonstrates the difference between Object3D transforms and vertex-level shape
+changes, combines both in one animation clip and uses only public engine APIs.

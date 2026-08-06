@@ -291,7 +291,7 @@ h3 {
 }
 
 .feature-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
 }
 
 .feature,
@@ -1967,6 +1967,33 @@ input[type="checkbox"] {
 
 .property-row + .property-row {
   margin-top: 0.75rem;
+}
+
+.deformation-help {
+  margin: 0 0 0.75rem;
+}
+
+.deformation-grid {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+.deformation-grid label {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.2rem 0.75rem;
+}
+
+.deformation-grid output {
+  color: var(--primary-strong);
+  font-family: monospace;
+  font-size: 0.68rem;
+}
+
+.deformation-grid input {
+  grid-column: 1 / -1;
 }
 
 .property-row > span {

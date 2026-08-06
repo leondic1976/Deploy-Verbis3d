@@ -27,6 +27,18 @@ export class WebGLResourceTracker {
     return resource;
   }
 
+  /** Deletes and untracks one buffer before global renderer disposal. */
+  releaseBuffer(resource: WebGLBuffer): void {
+    if (!this.buffers.delete(resource)) return;
+    this.gl.deleteBuffer(resource);
+  }
+
+  /** Deletes and untracks one vertex array before global renderer disposal. */
+  releaseVertexArray(resource: WebGLVertexArrayObject): void {
+    if (!this.vertexArrays.delete(resource)) return;
+    this.gl.deleteVertexArray(resource);
+  }
+
   dispose(): void {
     for (const resource of this.buffers) this.gl.deleteBuffer(resource);
     for (const resource of this.vertexArrays) this.gl.deleteVertexArray(resource);

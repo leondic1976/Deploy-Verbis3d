@@ -91,7 +91,9 @@ export class AnimationAction {
       parts[0] !== "position" &&
       parts[0] !== "scale" &&
       parts[0] !== "quaternion" &&
-      parts[0] !== "rotation"
+      parts[0] !== "rotation" &&
+      parts[0] !== "deformation" &&
+      parts[0] !== "userData"
     ) {
       const name = parts.shift()!;
       const found = this.root.getObjectByName(name);

@@ -152,6 +152,62 @@ export class RuleBasedProvider implements AIProvider {
       }
     }
 
+    const resetShape = this.includes(normalized, [
+      "원래 모양",
+      "변형 초기화",
+      "모양 초기화",
+      "reset shape",
+      "reset deformation",
+    ]);
+    const deformationWords = [
+      "휘어",
+      "구부",
+      "비틀",
+      "점점 가늘",
+      "물결",
+      "모양을 늘",
+      "deform",
+      "bend",
+      "twist",
+      "taper",
+      "wave",
+      "stretch shape",
+    ];
+    if (resetShape) {
+      for (const target of targets) {
+        commands.push({
+          version: "1.0",
+          command: "resetDeformation",
+          target: { name: target },
+          parameters: {},
+        });
+      }
+    } else if (this.includes(normalized, deformationWords)) {
+      const parameters: Record<string, unknown> = { axis: "y", unit: "degrees" };
+      if (this.includes(normalized, ["휘어", "구부", "bend", "deform"])) {
+        parameters["bend"] = this.numberAround(normalized, ["휘어", "구부", "bend"], 45);
+      }
+      if (this.includes(normalized, ["비틀", "twist"])) {
+        parameters["twist"] = this.numberAround(normalized, ["비틀", "twist"], 120);
+      }
+      if (this.includes(normalized, ["점점 가늘", "taper"])) parameters["taper"] = 0.8;
+      if (this.includes(normalized, ["모양을 늘", "stretch shape"])) {
+        parameters["stretch"] = this.numberAround(normalized, ["모양을 늘", "stretch shape"], 1.5);
+      }
+      if (this.includes(normalized, ["물결", "wave"])) {
+        parameters["waveAmplitude"] = 0.2;
+        parameters["waveFrequency"] = 2;
+      }
+      for (const target of targets) {
+        commands.push({
+          version: "1.0",
+          command: "deformObject",
+          target: { name: target },
+          parameters: { ...parameters },
+        });
+      }
+    }
+
     const color = this.color(normalized);
     if (color) {
       for (const target of targets) {

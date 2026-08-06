@@ -14,7 +14,8 @@ Unit tests cover math, transforms, hierarchy, cameras, primitives, materials, an
 validation, natural-language creation, compound-model hierarchy/round-trip, vision photo limits,
 offline segmentation, depth/pose carving, cancellable asynchronous visual hulls, source-photo
 vertex colors, remote vision payloads, independent mesh generators and color-aware geometry
-round-trip.
+round-trip. Deformation tests cover deterministic re-evaluation, reset, limits, normal/bounds
+refresh, clone independence, baked JSON, command routing, natural language and animation binding.
 Integration tests cover engine scheduling, plugin lifecycle, serialization, asset caching and
 scene-to-render-list behavior. An independence test rejects completed third-party 3D engine runtime
 dependencies and source imports.
@@ -24,8 +25,8 @@ layout, all four Playground levels, undo/redo, structured command dry-runs, natu
 creation, procedural car/person/face/tree editing, selected-object context, mocked Ollama transport,
 photo-workflow demo reconstruction and cancellation, depth/color diagnostics, vision provider
 privacy controls, viewport picking, orbit/zoom,
-the Korean guide, example source viewer and console errors. It avoids pixel snapshots because
-virtual GPU output varies.
+the Korean guide, example source viewer, live deformation, GPU geometry revisions and console
+errors. It avoids pixel snapshots because virtual GPU output varies.
 
 `npm run typecheck` includes `tsconfig.examples.json`, so every source shown in the learning
 library is checked against the current public API.

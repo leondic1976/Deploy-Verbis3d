@@ -42,6 +42,18 @@ flowchart LR
   F --> G[Renderer]
 ```
 
+## Mesh deformation flow
+
+```mermaid
+flowchart LR
+  A[Direct API / command / scalar track] --> B[Validated MeshDeformer state]
+  B --> C[Captured base positions]
+  C --> D[Stretch -> bend -> twist -> taper -> wave]
+  D --> E[Vertex normals and bounds]
+  E --> F[Geometry revision]
+  F --> G[Reused WebGL2 buffers]
+```
+
 Factories are application-owned rather than global. Built-in and custom models therefore share
 the normal scene graph while catalog contents and command exposure remain explicit.
 

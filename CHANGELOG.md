@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+## 0.4.0-alpha.1 - 2026-08-06
+
+### Added
+
+- Deterministic `MeshDeformer` with axis-aware stretch, bend, twist, taper and wave parameters
+- `deformObject` and `resetDeformation` commands with runtime range validation
+- Scalar animation binding for paths such as `deformation.twist`
+- Mesh deformation example and interactive Playground deformation lab
+- Korean and English rule parsing for allowlisted shape-change commands
+
+### Changed
+
+- Geometry now clones typed data, reconstructs vertex normals, tracks content revisions and marks
+  changed primitive meshes for data-only serialization
+- WebGL2 geometry bindings reuse buffers when deformation updates vertex content
+- Mesh clones receive independent geometry data
+- Package version advanced to `0.4.0-alpha.1`
+
+### Limitations
+
+- CPU deformation targets moderate interactive meshes; worker/GPU deformation is not implemented
+- Scene JSON preserves the baked pose but not the original base snapshot and live modifier stack
+- Skeletal skinning, soft-body simulation and morph-target authoring remain future work
+
 ## 0.3.0-alpha.1 - 2026-08-06
 
 ### Added

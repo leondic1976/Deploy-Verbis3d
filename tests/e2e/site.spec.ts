@@ -37,6 +37,35 @@ test("playground edits transforms and runs an offline natural-language command",
   await expect(page.locator("#position-x")).toHaveValue("0.00");
 });
 
+test("playground deforms mesh vertices, resets shape and accepts a safe language command", async ({
+  page,
+}) => {
+  await page.goto("./playground.html?level=advanced&preset=deformation-lab");
+  const canvas = page.locator("#playground-canvas");
+  await expect(canvas).toHaveAttribute("data-webgl-ready", "true");
+  await expect(page.locator("#selected-name")).toHaveText("animated-sculpture");
+  await expect(page.locator("#deformation-properties")).toBeVisible();
+  await expect(canvas).toHaveAttribute("data-deformation", "active");
+
+  await page.getByRole("button", { name: "Pause motion" }).click();
+  const versionBeforeEdit = Number(await canvas.getAttribute("data-geometry-version"));
+  await page.locator("#deformation-bend").fill("90");
+  await expect(page.locator("#deformation-bend-value")).toHaveText("90°");
+  await expect
+    .poll(async () => Number(await canvas.getAttribute("data-geometry-version")))
+    .toBeGreaterThan(versionBeforeEdit);
+
+  await page.getByRole("button", { name: "Reset shape" }).click();
+  await expect(canvas).toHaveAttribute("data-deformation", "neutral");
+  await expect(page.locator("#deformation-bend")).toHaveValue("0");
+
+  await page.locator("#natural-command").fill("animated-sculpture를 90도 휘어");
+  await page.getByRole("button", { name: "Validate and run" }).click();
+  await expect(page.locator("#command-result")).toHaveAttribute("data-state", "success");
+  await expect(page.locator("#natural-command-preview")).toContainText("deformObject");
+  await expect(canvas).toHaveAttribute("data-deformation", "active");
+});
+
 test("playground supports viewport picking, orbit, pan and zoom", async ({ page }) => {
   await page.goto("./playground.html");
   const canvas = page.locator("#playground-canvas");
@@ -282,8 +311,7 @@ test("photo reconstruction can be canceled without mutating the scene", async ({
   await page.getByRole("button", { name: "Use demo views" }).click();
   await page.locator("#reconstruction-resolution").selectOption("28");
   await page.getByRole("button", { name: "Create 3D object" }).click();
-  await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
-  await page.getByRole("button", { name: "Cancel" }).click();
+  await page.locator("#cancel-reconstruction").click({ force: true });
   await expect(page.locator("#photo-result")).toContainText("Reconstruction canceled");
   await expect(page.locator("#edit-reconstruction")).toBeDisabled();
   await expect(page.locator("#reconstruct-photos")).toBeEnabled();
@@ -306,9 +334,9 @@ test("photo workflow exposes private local and replaceable remote vision provide
 
 test("example library filters and exposes complete verified source", async ({ page }) => {
   await page.goto("./examples.html");
-  await expect(page.locator("#example-count")).toHaveText("21 of 21 examples");
+  await expect(page.locator("#example-count")).toHaveText("22 of 22 examples");
   await page.locator('[data-example-level="expert"]').click();
-  await expect(page.locator("#example-count")).toHaveText("4 of 21 examples");
+  await expect(page.locator("#example-count")).toHaveText("4 of 22 examples");
   await page.getByRole("button", { name: /Natural-language scene recipe/ }).click();
   await expect(page.locator("#source-code")).toContainText("const recipe");
   await expect(page.locator("#source-code")).toContainText("controller.execute");

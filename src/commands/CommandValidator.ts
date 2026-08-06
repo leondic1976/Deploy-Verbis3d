@@ -85,7 +85,75 @@ export class CommandValidator {
         return this.failure(command.command, "OUT_OF_RANGE", "Scale values must be positive.");
       }
     }
+    if (command.command === "deformObject") {
+      const deformationFailure = this.validateDeformation(command);
+      if (deformationFailure) return deformationFailure;
+    }
     return { valid: true, command };
+  }
+
+  private validateDeformation(command: EngineCommand): ValidationFailure | undefined {
+    const parameters = command.parameters;
+    const axis = parameters["axis"];
+    if (axis !== undefined && axis !== "x" && axis !== "y" && axis !== "z") {
+      return this.failure(command.command, "INVALID_SCHEMA", "Deformation axis must be x, y or z.");
+    }
+    const unit = parameters["unit"];
+    if (unit !== undefined && unit !== "degrees" && unit !== "radians") {
+      return this.failure(
+        command.command,
+        "INVALID_SCHEMA",
+        "Deformation unit must be degrees or radians.",
+      );
+    }
+    for (const key of [
+      "stretch",
+      "bend",
+      "twist",
+      "taper",
+      "waveAmplitude",
+      "waveFrequency",
+      "wavePhase",
+    ]) {
+      const value = parameters[key];
+      if (value !== undefined && (typeof value !== "number" || !Number.isFinite(value))) {
+        return this.failure(
+          command.command,
+          "INVALID_SCHEMA",
+          `Deformation parameter '${key}' must be finite.`,
+        );
+      }
+    }
+    const stretch = parameters["stretch"];
+    if (typeof stretch === "number" && (stretch < 0.05 || stretch > 20)) {
+      return this.failure(
+        command.command,
+        "OUT_OF_RANGE",
+        "Stretch must be in the 0.05..20 range.",
+      );
+    }
+    const factor = unit === "degrees" ? Math.PI / 180 : 1;
+    const bend = parameters["bend"];
+    if (typeof bend === "number" && Math.abs(bend * factor) > Math.PI * 4) {
+      return this.failure(command.command, "OUT_OF_RANGE", "Bend exceeds four full turns.");
+    }
+    const twist = parameters["twist"];
+    if (typeof twist === "number" && Math.abs(twist * factor) > Math.PI * 8) {
+      return this.failure(command.command, "OUT_OF_RANGE", "Twist exceeds eight full turns.");
+    }
+    const taper = parameters["taper"];
+    if (typeof taper === "number" && Math.abs(taper) >= 1.95) {
+      return this.failure(command.command, "OUT_OF_RANGE", "Taper magnitude must be below 1.95.");
+    }
+    const waveAmplitude = parameters["waveAmplitude"];
+    if (typeof waveAmplitude === "number" && Math.abs(waveAmplitude) > 10_000) {
+      return this.failure(command.command, "OUT_OF_RANGE", "Wave amplitude exceeds 10,000 units.");
+    }
+    const waveFrequency = parameters["waveFrequency"];
+    if (typeof waveFrequency === "number" && (waveFrequency < 0 || waveFrequency > 128)) {
+      return this.failure(command.command, "OUT_OF_RANGE", "Wave frequency must be in 0..128.");
+    }
+    return undefined;
   }
 
   private validTarget(value: unknown): boolean {

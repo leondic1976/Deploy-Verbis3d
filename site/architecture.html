@@ -51,6 +51,15 @@
         <div>Command bus → public object APIs</div>
       </div>
       <p><a href="./docs.html#commands">Read command safety documentation</a></p>
+      <h2>Mesh deformation path</h2>
+      <div class="architecture-flow" aria-label="Mesh deformation architecture">
+        <div>Direct API, command or scalar animation track</div>
+        <div>Validated MeshDeformer state</div>
+        <div>Captured base → stretch → bend → twist → taper → wave</div>
+        <div>Vertex normals and bounding volumes</div>
+        <div>Geometry revision → reused WebGL2 buffers</div>
+      </div>
+      <p><a href="./docs.html#deformation">Read mesh deformation documentation</a></p>
       <h2>Photo reconstruction path</h2>
       <div class="architecture-flow" aria-label="Photo reconstruction architecture">
         <div>Validated multi-view photos</div>
