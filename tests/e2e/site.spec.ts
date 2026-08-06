@@ -266,11 +266,27 @@ test("photo workflow guides users from demo views to validated 3D geometry", asy
   await expect(page.locator("#photo-result")).toContainText("Created");
   await expect(page.locator("#photo-stat-label")).toHaveText("person");
   await expect(page.locator("#photo-stat-triangles")).not.toHaveText("—");
+  await expect(page.locator("#photo-stat-depth")).toHaveText("2/2");
+  await expect(page.locator("#photo-stat-pose")).toHaveText("0/2");
+  await expect(page.locator("#photo-stat-color")).toContainText("Photo");
+  await expect(page.locator("#photo-stat-stages")).toHaveText("2");
   await expect(page.locator("#edit-reconstruction")).toBeEnabled();
   await page.getByRole("button", { name: "Edit in scene" }).click();
   await expect(page.locator("#selected-name")).toHaveText("person");
   await expect(page.locator("#geometry-name")).toHaveText("BufferGeometry");
   expect(errors).toEqual([]);
+});
+
+test("photo reconstruction can be canceled without mutating the scene", async ({ page }) => {
+  await page.goto("./playground.html?workflow=photos");
+  await page.getByRole("button", { name: "Use demo views" }).click();
+  await page.locator("#reconstruction-resolution").selectOption("28");
+  await page.getByRole("button", { name: "Create 3D object" }).click();
+  await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.locator("#photo-result")).toContainText("Reconstruction canceled");
+  await expect(page.locator("#edit-reconstruction")).toBeDisabled();
+  await expect(page.locator("#reconstruct-photos")).toBeEnabled();
 });
 
 test("photo workflow exposes private local and replaceable remote vision providers", async ({

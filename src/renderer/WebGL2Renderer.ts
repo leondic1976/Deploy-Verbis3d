@@ -1,6 +1,6 @@
 import type { Camera } from "../cameras/index.js";
 import type { Mesh, Scene } from "../core/index.js";
-import { BasicMaterial } from "../materials/index.js";
+import { BasicMaterial, VertexColorMaterial } from "../materials/index.js";
 import { WebGLBufferManager } from "./WebGLBufferManager.js";
 import { WebGLContext } from "./WebGLContext.js";
 import { WebGLProgramManager } from "./WebGLProgramManager.js";
@@ -87,6 +87,7 @@ export class WebGL2Renderer implements Renderer {
 
   private draw(mesh: Mesh, camera: Camera): void {
     if (mesh.material instanceof BasicMaterial) mesh.material.syncUniforms();
+    if (mesh.material instanceof VertexColorMaterial) mesh.material.syncUniforms();
     const program = this.programs.get(mesh.material);
     const binding = this.buffers.get(mesh.geometry, program);
     this.state.apply(mesh.material);

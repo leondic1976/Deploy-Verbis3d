@@ -1,6 +1,9 @@
 import { Mesh } from "../core/index.js";
 import { BufferAttribute, Geometry } from "../geometry/index.js";
-import { BasicMaterial } from "../materials/index.js";
+import { BasicMaterial, VertexColorMaterial } from "../materials/index.js";
+import { PhotoColorProjector } from "./PhotoColorProjector.js";
+import type { VisionAnalysisEnhancer } from "./VisionAnalysisEnhancer.js";
+import type { VisionMeshGenerator } from "./VisionMeshGenerator.js";
 import { isVisionMeshProvider, type VisionAIProvider } from "./VisionAIProvider.js";
 import type {
   ReconstructionMeshData,
@@ -20,6 +23,9 @@ import { VisualHullReconstructor, type VisualHullOptions } from "./VisualHullRec
 export interface PhotoReconstructionOptions extends VisionAnalyzeOptions, VisualHullOptions {
   readonly name?: string;
   readonly preferProviderMesh?: boolean;
+  readonly enhancers?: readonly VisionAnalysisEnhancer[];
+  readonly meshGenerator?: VisionMeshGenerator;
+  readonly projectColors?: boolean;
   readonly onProgress?: (event: ReconstructionProgress) => void;
 }
 
@@ -30,6 +36,13 @@ export interface PhotoReconstructionStats {
   readonly triangleCount: number;
   readonly occupiedVoxelCount?: number;
   readonly resolution?: number;
+  readonly depthViewCount: number;
+  readonly poseViewCount: number;
+  readonly enhancerIds: readonly string[];
+  readonly colorSource: "average" | "photo-projected";
+  readonly projectedVertexCount?: number;
+  readonly fallbackVertexCount?: number;
+  readonly meshGeneratorId?: string;
 }
 
 export interface PhotoReconstructionResult {
@@ -47,6 +60,7 @@ export class PhotoReconstructionPipeline {
   constructor(
     public readonly provider: VisionAIProvider,
     private readonly visualHull = new VisualHullReconstructor(),
+    private readonly colorProjector = new PhotoColorProjector(),
   ) {}
 
   /** Analyze source photos and return one validated, renderable engine mesh. */
@@ -58,48 +72,97 @@ export class PhotoReconstructionPipeline {
     validateVisionPhotos(photos);
     options.signal?.throwIfAborted();
     emit(options, "analyzing", 0.2, `Analyzing ${photos.length} photos with ${this.provider.name}`);
-    const analysis = validateVisionAnalysis(
+    let analysis = validateVisionAnalysis(
       await this.provider.analyze(photos, providerOptions(options)),
       photos,
     );
     options.signal?.throwIfAborted();
-    emit(options, "reconstructing", 0.62, "Building validated 3D geometry");
+    const enhancerIds: string[] = [];
+    const seenEnhancers = new Set<string>();
+    for (const [index, enhancer] of (options.enhancers ?? []).entries()) {
+      const enhancerId = enhancer.id.trim();
+      if (!enhancerId) throw new TypeError("Vision enhancer id is required.");
+      if (seenEnhancers.has(enhancerId)) {
+        throw new Error(`Vision enhancer '${enhancerId}' is configured more than once.`);
+      }
+      seenEnhancers.add(enhancerId);
+      emit(
+        options,
+        "enhancing",
+        0.3 + (index / Math.max(1, options.enhancers?.length ?? 1)) * 0.12,
+        `Enhancing analysis with ${enhancer.name}`,
+      );
+      analysis = validateVisionAnalysis(
+        await enhancer.enhance(photos, analysis, providerOptions(options)),
+        photos,
+      );
+      enhancerIds.push(enhancerId);
+      options.signal?.throwIfAborted();
+    }
+    emit(options, "reconstructing", 0.45, "Building validated 3D geometry");
 
     let geometry: Geometry;
     let color: VisionColor;
-    let stats: PhotoReconstructionStats;
-    if (options.preferProviderMesh !== false && isVisionMeshProvider(this.provider)) {
-      const data = await this.provider.generateMesh(photos, analysis, providerOptions(options));
+    let reconstructionStats: Omit<
+      PhotoReconstructionStats,
+      "enhancerIds" | "colorSource" | "projectedVertexCount" | "fallbackVertexCount"
+    >;
+    const meshGenerator =
+      options.meshGenerator ?? (isVisionMeshProvider(this.provider) ? this.provider : undefined);
+    if (options.preferProviderMesh !== false && meshGenerator) {
+      const meshGeneratorId = meshGenerator.id.trim();
+      if (!meshGeneratorId) throw new TypeError("Vision mesh generator id is required.");
+      const data = await meshGenerator.generateMesh(photos, analysis, providerOptions(options));
+      options.signal?.throwIfAborted();
       validateReconstructionMeshData(data);
       geometry = geometryFromProvider(data);
       color = data.color ?? averageAnalysisColor(analysis);
-      stats = {
+      reconstructionStats = {
         method: "provider-mesh",
         sourcePhotoCount: photos.length,
         vertexCount: geometry.vertexCount,
         triangleCount: data.indices.length / 3,
+        depthViewCount: analysis.views.filter((view) => view.depth !== undefined).length,
+        poseViewCount: analysis.views.filter((view) => view.cameraPose !== undefined).length,
+        meshGeneratorId,
       };
     } else {
-      const result = this.visualHull.reconstruct(analysis, {
-        ...(options.resolution === undefined ? {} : { resolution: options.resolution }),
-        ...(options.maximumTriangles === undefined
-          ? {}
-          : { maximumTriangles: options.maximumTriangles }),
-      });
+      const result = await this.visualHull.reconstructAsync(analysis, visualHullOptions(options));
       geometry = result.geometry;
       color = result.color;
-      stats = {
+      reconstructionStats = {
         method: "visual-hull",
         sourcePhotoCount: photos.length,
         vertexCount: geometry.vertexCount,
         triangleCount: result.triangleCount,
         occupiedVoxelCount: result.occupiedVoxelCount,
         resolution: result.resolution,
+        depthViewCount: result.depthViewCount,
+        poseViewCount: result.poseViewCount,
       };
     }
 
-    const material = new BasicMaterial({ color });
+    let projectedVertexCount: number | undefined;
+    let fallbackVertexCount: number | undefined;
+    if (options.projectColors) {
+      emit(options, "projecting", 0.9, "Projecting source-photo colors onto the mesh");
+      const projection = this.colorProjector.project(geometry, photos, analysis, color);
+      projectedVertexCount = projection.projectedVertexCount;
+      fallbackVertexCount = projection.fallbackVertexCount;
+    }
+    options.signal?.throwIfAborted();
+    const colorSource = options.projectColors ? "photo-projected" : "average";
+    const material = options.projectColors
+      ? new VertexColorMaterial()
+      : new BasicMaterial({ color });
     const mesh = new Mesh(geometry, material);
+    const stats: PhotoReconstructionStats = {
+      ...reconstructionStats,
+      enhancerIds,
+      colorSource,
+      ...(projectedVertexCount === undefined ? {} : { projectedVertexCount }),
+      ...(fallbackVertexCount === undefined ? {} : { fallbackVertexCount }),
+    };
     mesh.name = safeName(options.name ?? analysis.label);
     mesh.userData["photoReconstruction"] = {
       providerId: this.provider.id,
@@ -111,6 +174,32 @@ export class PhotoReconstructionPipeline {
     emit(options, "complete", 1, `Created ${stats.triangleCount} validated triangles`);
     return { mesh, analysis, providerId: this.provider.id, stats };
   }
+}
+
+function visualHullOptions(options: PhotoReconstructionOptions): VisualHullOptions {
+  return {
+    ...(options.resolution === undefined ? {} : { resolution: options.resolution }),
+    ...(options.maximumTriangles === undefined
+      ? {}
+      : { maximumTriangles: options.maximumTriangles }),
+    ...(options.useDepth === undefined ? {} : { useDepth: options.useDepth }),
+    ...(options.depthTolerance === undefined ? {} : { depthTolerance: options.depthTolerance }),
+    ...(options.signal === undefined ? {} : { signal: options.signal }),
+    ...(options.yieldEverySlices === undefined
+      ? {}
+      : { yieldEverySlices: options.yieldEverySlices }),
+    onVoxelProgress: (event) => {
+      options.onVoxelProgress?.(event);
+      const progress =
+        event.phase === "carving" ? 0.45 + event.progress * 0.27 : 0.72 + event.progress * 0.16;
+      emit(
+        options,
+        "reconstructing",
+        progress,
+        event.phase === "carving" ? "Carving multi-view volume" : "Extracting triangle surface",
+      );
+    },
+  };
 }
 
 function geometryFromProvider(data: ReconstructionMeshData): Geometry {

@@ -190,11 +190,30 @@
                 Background separation <output id="segmentation-threshold-value">46</output>
                 <input id="segmentation-threshold" type="range" min="15" max="110" value="46" />
               </label>
+              <label class="photo-quality-toggle" for="depth-refinement">
+                <input id="depth-refinement" type="checkbox" checked />
+                <span>
+                  <strong>Depth refinement</strong>
+                  <small>Rounds the visual hull with a local silhouette-depth pass.</small>
+                </span>
+              </label>
+              <label for="photo-color-mode">
+                Surface color
+                <select id="photo-color-mode">
+                  <option value="projected" selected>Project photo colors</option>
+                  <option value="average">Single average color</option>
+                </select>
+              </label>
             </fieldset>
 
-            <button id="reconstruct-photos" class="photo-primary-action" type="submit" disabled>
-              Create 3D object
-            </button>
+            <div class="photo-build-actions">
+              <button id="reconstruct-photos" class="photo-primary-action" type="submit" disabled>
+                Create 3D object
+              </button>
+              <button id="cancel-reconstruction" class="secondary" type="button" hidden>
+                Cancel
+              </button>
+            </div>
             <div class="photo-progress" aria-live="polite">
               <progress id="photo-progress" max="100" value="0">0%</progress>
               <output id="photo-progress-label">Add at least two perpendicular views.</output>
@@ -729,6 +748,22 @@
               <dt>Triangles</dt>
               <dd id="photo-stat-triangles">—</dd>
             </div>
+            <div>
+              <dt>Depth views</dt>
+              <dd id="photo-stat-depth">—</dd>
+            </div>
+            <div>
+              <dt>Pose views</dt>
+              <dd id="photo-stat-pose">—</dd>
+            </div>
+            <div>
+              <dt>Surface color</dt>
+              <dd id="photo-stat-color">—</dd>
+            </div>
+            <div>
+              <dt>AI stages</dt>
+              <dd id="photo-stat-stages">1</dd>
+            </div>
           </dl>
           <div class="capture-guidance">
             <h3>For a cleaner model</h3>
@@ -739,8 +774,8 @@
             </ul>
           </div>
           <p class="photo-limit-note">
-            This alpha creates a geometric visual hull, not a photorealistic NeRF or production
-            character mesh. Specialized AI can plug into the same provider interface.
+            This alpha combines validated AI stages, depth-aware visual hulls and optional photo
+            color projection. It is not a photorealistic NeRF or production character mesh.
           </p>
         </section>
 

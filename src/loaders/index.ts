@@ -3,6 +3,7 @@ export { AssetManager } from "./AssetManager.js";
 export {
   JSONSceneLoader,
   type SerializedBufferGeometry,
+  type SerializedColorAttribute,
   type SerializedObject,
   type SerializedScene,
 } from "./JSONSceneLoader.js";

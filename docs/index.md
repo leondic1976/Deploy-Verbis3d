@@ -1,6 +1,6 @@
 # Verbis3D documentation
 
-Verbis3D `0.2.0-alpha.1` is a directly implemented TypeScript/WebGL2 engine alpha.
+Verbis3D `0.3.0-alpha.1` is a directly implemented TypeScript/WebGL2 engine alpha.
 
 - [Getting started](getting-started.md)
 - [한국어 문서](ko/README.md)

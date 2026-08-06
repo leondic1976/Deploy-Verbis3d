@@ -10,6 +10,7 @@ import {
   Shader,
   SphereGeometry,
   Vector3,
+  VertexColorMaterial,
 } from "../../src/index.js";
 
 describe("camera, geometry and material", () => {
@@ -58,6 +59,10 @@ describe("camera, geometry and material", () => {
     expect(material.transparent).toBe(true);
     material.syncUniforms();
     expect(material.uniforms.get("uColor")?.value).toEqual([0.2, 0.4, 0.6, 0.8]);
+    const vertexMaterial = new VertexColorMaterial({ tint: [0.8, 0.7, 0.6, 1] });
+    vertexMaterial.syncUniforms();
+    expect(vertexMaterial.uniforms.get("uTint")?.value).toEqual([0.8, 0.7, 0.6, 1]);
+    expect(vertexMaterial.shaderProgram.vertexShader.source).toContain("in vec4 aColor");
     expect(() => new Shader("vertex", "void main() {}")).toThrow(/version/);
   });
 });

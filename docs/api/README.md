@@ -7,10 +7,11 @@ Primary entry points:
 - Math: vectors, matrices, quaternion, bounds and frustum
 - Core: Engine, Scene, Object3D, Entity, Component and Mesh
 - Rendering: Renderer and WebGL2Renderer
-- Content: Geometry, primitives, Material and BasicMaterial
+- Content: Geometry, primitives, Material, BasicMaterial and VertexColorMaterial
 - Procedural content: `ProceduralModel`, isolated `ModelFactory` registries, custom templates and
   editable car/person/face/tree hierarchies
-- Reconstruction: `PhotoReconstructionPipeline`, `VisualHullReconstructor`, validated photo/mask
-  schemas and application-owned `VisionProviderRegistry`
-- Vision AI: offline, Mock, Ollama vision, OpenAI-compatible vision and custom mesh providers
+- Reconstruction: `PhotoReconstructionPipeline`, `VisualHullReconstructor`, photo color projection,
+  cancellation, validated photo/mask/depth/pose schemas and application-owned provider registries
+- Vision AI: offline, Mock, Ollama vision, OpenAI-compatible vision, ordered
+  `VisionAnalysisEnhancer` stages and independent `VisionMeshGenerator` implementations
 - Behavior: animation, commands, AI providers, loaders and plugins

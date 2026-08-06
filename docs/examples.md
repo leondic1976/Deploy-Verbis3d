@@ -32,6 +32,7 @@ recipe.
 The examples deliberately use only Verbis3D and browser APIs. They do not introduce a complete
 third-party 3D engine.
 
-`photo-to-3d` demonstrates the provider-neutral reconstruction pipeline. Pass any
-`VisionAIProvider` to the same function to use the offline baseline, Ollama, a compatible endpoint
-or an application-specific segmentation/mesh service.
+`photo-to-3d` demonstrates the provider-neutral reconstruction pipeline, local depth refinement,
+photo vertex colors and cancellation. Pass any `VisionAIProvider` to use the offline baseline,
+Ollama or a compatible endpoint; add ordered `VisionAnalysisEnhancer` stages and an independent
+`VisionMeshGenerator` for application-specific depth, pose and geometry services.

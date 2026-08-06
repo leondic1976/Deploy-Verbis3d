@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## 0.3.0-alpha.1 - 2026-08-06
+
+### Added
+
+- Composable `VisionAnalysisEnhancer` stages so segmentation, depth and camera-pose models can be
+  supplied by different local or remote AI systems
+- Independent `VisionMeshGenerator` support for combining one recognition AI with another mesh AI
+- Validated calibrated camera poses and depth-aware voxel carving
+- Cancellable asynchronous visual-hull reconstruction that yields between bounded slice batches
+- Local `SilhouetteDepthEnhancer` for deterministic rounded depth previews
+- Source-photo vertex-color projection and `VertexColorMaterial`
+- Validated vertex-color geometry and material JSON round-trip
+- Playground depth/color controls, live carving progress, cancellation and result diagnostics
+
 ## 0.2.0-alpha.1 - 2026-08-06
 
 ### Added

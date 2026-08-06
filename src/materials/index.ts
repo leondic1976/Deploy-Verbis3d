@@ -9,3 +9,9 @@ export { Shader } from "./Shader.js";
 export { ShaderProgram } from "./ShaderProgram.js";
 export { Uniform, type UniformValue } from "./Uniform.js";
 export { UnlitMaterial } from "./UnlitMaterial.js";
+export {
+  VertexColorMaterial,
+  VERTEX_COLOR_FRAGMENT_SHADER,
+  VERTEX_COLOR_VERTEX_SHADER,
+  type VertexColorMaterialOptions,
+} from "./VertexColorMaterial.js";

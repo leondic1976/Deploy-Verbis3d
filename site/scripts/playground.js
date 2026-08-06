@@ -20,6 +20,7 @@ import {
   RuleBasedProvider,
   RuleBasedVisionProvider,
   Scene,
+  SilhouetteDepthEnhancer,
   SphereGeometry,
   Vector3,
   WebGL2Renderer,
@@ -171,6 +172,7 @@ const state = {
   },
   photoItems: [],
   photoBusy: false,
+  photoAbortController: null,
   photoStage: "photos",
   lastReconstruction: null,
   visionProviderMode: "offline",
@@ -476,6 +478,16 @@ if (renderer) {
   const updatePhotoControls = () => {
     const ready = photoCaptureReady();
     byId("reconstruct-photos").disabled = !ready || state.photoBusy;
+    byId("cancel-reconstruction").hidden = !state.photoBusy;
+    byId("cancel-reconstruction").disabled = !state.photoBusy;
+    byId("choose-photos").disabled = state.photoBusy;
+    byId("load-demo-photos").disabled = state.photoBusy;
+    byId("photo-input").disabled = state.photoBusy;
+    for (const control of document.querySelectorAll(
+      ".photo-list-item select, .photo-list-item button, #vision-provider-mode, #reconstruction-resolution, #depth-refinement, #photo-color-mode",
+    )) {
+      control.disabled = state.photoBusy;
+    }
     byId("photo-stat-count").textContent = String(state.photoItems.length);
     byId("photo-empty").hidden = state.photoItems.length > 0;
     if (!state.photoBusy && state.photoStage !== "complete") {
@@ -709,6 +721,8 @@ if (renderer) {
       return;
     }
     state.photoBusy = true;
+    const abortController = new AbortController();
+    state.photoAbortController = abortController;
     state.photoStage = "recognize";
     updatePhotoControls();
     resultOutput.dataset.state = "";
@@ -719,6 +733,8 @@ if (renderer) {
       const hint = byId("photo-object-hint").value.trim();
       const name = uniqueName(hint || "photo-object");
       const pipeline = new PhotoReconstructionPipeline(provider);
+      const depthRefinement = byId("depth-refinement").checked;
+      const projectColors = byId("photo-color-mode").value === "projected";
       const reconstruction = await pipeline.reconstruct(
         state.photoItems.map((item) => item.photo),
         {
@@ -726,8 +742,13 @@ if (renderer) {
           ...(hint ? { objectHint: hint } : {}),
           resolution: Number(byId("reconstruction-resolution").value),
           segmentationThreshold: Number(byId("segmentation-threshold").value),
+          signal: abortController.signal,
+          yieldEverySlices: 1,
+          enhancers: depthRefinement ? [new SilhouetteDepthEnhancer()] : [],
+          projectColors,
           onProgress: (event) => {
-            state.photoStage = event.stage === "analyzing" ? "recognize" : "build";
+            state.photoStage =
+              event.stage === "analyzing" || event.stage === "enhancing" ? "recognize" : "build";
             byId("photo-progress").value = Math.round(event.progress * 100);
             byId("photo-progress-label").textContent = event.message;
             updatePhotoSteps();
@@ -751,12 +772,28 @@ if (renderer) {
         reconstruction.stats.method === "visual-hull" ? "Visual hull" : "AI mesh";
       byId("photo-stat-triangles").textContent =
         reconstruction.stats.triangleCount.toLocaleString();
+      byId("photo-stat-depth").textContent =
+        `${reconstruction.stats.depthViewCount}/${reconstruction.stats.sourcePhotoCount}`;
+      byId("photo-stat-pose").textContent =
+        `${reconstruction.stats.poseViewCount}/${reconstruction.stats.sourcePhotoCount}`;
+      const projectedPercent = Math.round(
+        ((reconstruction.stats.projectedVertexCount ?? 0) /
+          Math.max(1, reconstruction.stats.vertexCount)) *
+          100,
+      );
+      byId("photo-stat-color").textContent =
+        reconstruction.stats.colorSource === "photo-projected"
+          ? `Photo ${projectedPercent}%`
+          : "Average";
+      byId("photo-stat-stages").textContent = String(1 + reconstruction.stats.enhancerIds.length);
       byId("photo-summary-title").textContent = `${reconstruction.mesh.name} created`;
       byId("photo-summary-description").textContent =
         `${provider.name} recognized ${reconstruction.analysis.label}. The generated mesh is selected in the preview.`;
       byId("edit-reconstruction").disabled = false;
       resultOutput.dataset.state = "success";
-      resultOutput.textContent = `Created ${reconstruction.stats.triangleCount.toLocaleString()} triangles from ${reconstruction.stats.sourcePhotoCount} photos.`;
+      resultOutput.textContent =
+        `Created ${reconstruction.stats.triangleCount.toLocaleString()} triangles from ${reconstruction.stats.sourcePhotoCount} photos` +
+        `${reconstruction.stats.depthViewCount > 0 ? ` with ${reconstruction.stats.depthViewCount} depth-refined views` : ""}.`;
       state.photoStage = "complete";
       byId("photo-progress").value = 100;
       byId("photo-progress-label").textContent =
@@ -768,13 +805,21 @@ if (renderer) {
       );
     } catch (error) {
       state.photoStage = "recognize";
-      resultOutput.dataset.state = "error";
-      resultOutput.textContent =
-        error instanceof Error ? error.message : "Photo reconstruction failed.";
-      byId("photo-progress-label").textContent =
-        "Nothing was added to the scene. Adjust the views or provider and try again.";
-      logActivity("error", "Photo reconstruction failed", resultOutput.textContent);
+      if (error instanceof Error && error.name === "AbortError") {
+        resultOutput.dataset.state = "";
+        resultOutput.textContent = "Reconstruction canceled. No object was added to the scene.";
+        byId("photo-progress-label").textContent = "Canceled. Adjust settings or start again.";
+        logActivity("info", "Photo reconstruction canceled", "No scene changes were applied");
+      } else {
+        resultOutput.dataset.state = "error";
+        resultOutput.textContent =
+          error instanceof Error ? error.message : "Photo reconstruction failed.";
+        byId("photo-progress-label").textContent =
+          "Nothing was added to the scene. Adjust the views or provider and try again.";
+        logActivity("error", "Photo reconstruction failed", resultOutput.textContent);
+      }
     } finally {
+      state.photoAbortController = null;
       state.photoBusy = false;
       updatePhotoControls();
     }
@@ -1911,6 +1956,10 @@ if (renderer) {
   byId("photo-reconstruction-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     await reconstructPhotos();
+  });
+  byId("cancel-reconstruction").addEventListener("click", () => {
+    byId("photo-progress-label").textContent = "Canceling reconstruction…";
+    state.photoAbortController?.abort();
   });
   byId("edit-reconstruction").addEventListener("click", () => {
     setWorkflow("scene");

@@ -8,7 +8,7 @@ import {
   PlaneGeometry,
   SphereGeometry,
 } from "../geometry/index.js";
-import { BasicMaterial } from "../materials/index.js";
+import { BasicMaterial, VertexColorMaterial } from "../materials/index.js";
 import { ProceduralModel } from "../models/index.js";
 import { Asset } from "./Asset.js";
 import { Loader } from "./Loader.js";
@@ -23,6 +23,7 @@ export interface SerializedObject {
   readonly enabled: boolean;
   readonly userData: Record<string, unknown>;
   readonly geometry?: "box" | "plane" | "sphere" | SerializedBufferGeometry;
+  readonly material?: "basic" | "vertex-color";
   readonly color?: readonly [number, number, number, number];
   readonly children: readonly SerializedObject[];
 }
@@ -32,7 +33,15 @@ export interface SerializedBufferGeometry {
   readonly kind: "buffer";
   readonly position: readonly number[];
   readonly normal?: readonly number[];
+  readonly color?: SerializedColorAttribute;
   readonly index: readonly number[];
+}
+
+/** Validated normalized vertex colors retained across scene JSON round-trips. */
+export interface SerializedColorAttribute {
+  readonly data: readonly number[];
+  readonly storage: "uint8" | "float32";
+  readonly normalized: boolean;
 }
 
 export interface SerializedScene {
@@ -108,6 +117,7 @@ export class JSONSceneLoader extends Loader<Scene> {
       else {
         const position = object.geometry.getAttribute("position");
         const normal = object.geometry.getAttribute("normal");
+        const color = object.geometry.getAttribute("color");
         const index = object.geometry.index;
         if (position && position.itemSize === 3 && index) {
           const bufferGeometry: SerializedBufferGeometry = {
@@ -115,12 +125,28 @@ export class JSONSceneLoader extends Loader<Scene> {
             position: Array.from(position.array),
             index: Array.from(index.array),
             ...(normal && normal.itemSize === 3 ? { normal: Array.from(normal.array) } : {}),
+            ...(color &&
+            color.itemSize === 4 &&
+            (color.array instanceof Uint8Array || color.array instanceof Float32Array)
+              ? {
+                  color: {
+                    data: Array.from(color.array),
+                    storage:
+                      color.array instanceof Uint8Array ? ("uint8" as const) : ("float32" as const),
+                    normalized: color.normalized,
+                  },
+                }
+              : {}),
           };
           (serialized as { geometry?: SerializedBufferGeometry }).geometry = bufferGeometry;
         }
       }
       if (object.material instanceof BasicMaterial) {
         (serialized as { color?: readonly number[] }).color = object.material.color.toArray();
+        (serialized as { material?: "basic" }).material = "basic";
+      } else if (object.material instanceof VertexColorMaterial) {
+        (serialized as { color?: readonly number[] }).color = object.material.tint.toArray();
+        (serialized as { material?: "vertex-color" }).material = "vertex-color";
       }
     }
     return serialized;
@@ -145,8 +171,20 @@ export class JSONSceneLoader extends Loader<Scene> {
     const rawUserData = value["userData"];
     const userData = this.isRecord(rawUserData) ? structuredClone(rawUserData) : {};
     const template = userData["template"];
+    const materialKind = value["material"];
+    if (materialKind !== undefined && materialKind !== "basic" && materialKind !== "vertex-color") {
+      throw new TypeError("Scene object material type is unsupported.");
+    }
+    if (materialKind === "vertex-color" && !geometry?.getAttribute("color")) {
+      throw new Error("Vertex-color material requires a color geometry attribute.");
+    }
     const object = geometry
-      ? new Mesh(geometry, new BasicMaterial({ color }))
+      ? new Mesh(
+          geometry,
+          materialKind === "vertex-color"
+            ? new VertexColorMaterial({ tint: color })
+            : new BasicMaterial({ color }),
+        )
       : value["type"] === "ProceduralModel" && typeof template === "string"
         ? new ProceduralModel(template, name)
         : new Object3D();
@@ -192,6 +230,37 @@ export class JSONSceneLoader extends Loader<Scene> {
         "normal",
       );
       geometry.setAttribute("normal", new BufferAttribute(new Float32Array(normal), 3));
+    }
+    const colorValue = value["color"];
+    if (colorValue !== undefined) {
+      if (!this.isRecord(colorValue)) {
+        throw new TypeError("Serialized geometry color attribute must be an object.");
+      }
+      const color = this.finiteNumberArray(
+        colorValue["data"],
+        vertexCount * 4,
+        vertexCount * 4,
+        4,
+        "color",
+      );
+      const storage = colorValue["storage"];
+      const normalized = colorValue["normalized"];
+      if (typeof normalized !== "boolean") {
+        throw new TypeError("Serialized geometry color normalized flag must be boolean.");
+      }
+      if (storage === "uint8") {
+        if (!color.every((item) => Number.isInteger(item) && item >= 0 && item <= 255)) {
+          throw new RangeError("Serialized uint8 colors must contain values in the 0..255 range.");
+        }
+        geometry.setAttribute("color", new BufferAttribute(new Uint8Array(color), 4, normalized));
+      } else if (storage === "float32") {
+        if (!color.every((item) => item >= 0 && item <= 1)) {
+          throw new RangeError("Serialized float colors must contain values in the 0..1 range.");
+        }
+        geometry.setAttribute("color", new BufferAttribute(new Float32Array(color), 4, normalized));
+      } else {
+        throw new TypeError("Serialized geometry color storage is unsupported.");
+      }
     }
     const maximumIndex = index.reduce((maximum, item) => Math.max(maximum, item), 0);
     geometry.setIndex(maximumIndex > 65_535 ? new Uint32Array(index) : new Uint16Array(index));

@@ -50,19 +50,24 @@ the normal scene graph while catalog contents and command exposure remain explic
 ```mermaid
 flowchart LR
   A[2–12 Photos] --> B[Input and Resource Validation]
-  B --> C[VisionAIProvider]
-  C --> D[Recognition / Masks / Optional Depth]
-  D --> E[Schema Validation]
-  E --> F{Provider mesh available?}
-  F -->|Yes| G[Validate Triangle Mesh]
-  F -->|No| H[Visual Hull Reconstruction]
-  G --> I[Geometry + Material]
-  H --> I
-  I --> J[Mesh / Scene / WebGL2 Renderer]
+  B --> C[Recognition / Segmentation AI]
+  C --> D[Validate Complete Analysis]
+  D --> E[Depth / Pose Enhancer Chain]
+  E --> F[Validate After Every Enhancer]
+  F --> G{Independent Mesh AI?}
+  G -->|Yes| H[Validate Triangle Mesh]
+  G -->|No| I[Async Depth / Pose Visual Hull]
+  H --> J[Optional Photo Color Projection]
+  I --> J
+  J --> K[Geometry + Validated Material]
+  K --> L[Mesh / Scene / WebGL2 Renderer]
 ```
 
 The provider registry is application-owned and may contain offline, Ollama, compatible or
-domain-specific services. All routes converge on the same resource and data validation boundary.
+domain-specific services. `VisionAnalysisEnhancer[]` allows separate segmentation, depth and
+camera-pose models to contribute without trusting one monolithic response. `VisionMeshGenerator`
+can be supplied independently of the recognition provider. All routes converge on the same
+resource and data validation boundary, and asynchronous voxel work observes `AbortSignal`.
 
 ## Frame loop
 

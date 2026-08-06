@@ -953,9 +953,53 @@ input[type="checkbox"] {
   background: rgb(247 215 116 / 5%);
 }
 
+.photo-quality-toggle {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.55rem;
+  padding: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+  background: rgb(82 212 178 / 4%);
+}
+
+.photo-quality-toggle input {
+  width: 1rem;
+  min-height: 1rem;
+  margin: 0.1rem 0 0;
+}
+
+.photo-quality-toggle span {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.photo-quality-toggle strong {
+  color: var(--text);
+  font-size: 0.72rem;
+}
+
+.photo-quality-toggle small {
+  color: var(--muted);
+  font-size: 0.64rem;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.photo-build-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.45rem;
+}
+
 .photo-primary-action {
   min-height: 3rem;
   font-weight: 800;
+}
+
+.photo-build-actions > .secondary {
+  min-width: 5.5rem;
 }
 
 .photo-primary-action:disabled {

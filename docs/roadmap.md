@@ -30,6 +30,17 @@ documentation site.
 - guided desktop/mobile Photos → 3D Playground workflow;
 - validated reconstructed buffer-geometry scene JSON round-trip.
 
+## 0.3.0-alpha.1 reconstruction quality
+
+- composable recognition, depth and camera-pose AI stages;
+- independent specialized mesh generators;
+- validated calibrated perspective camera poses;
+- depth-aware, cancellable asynchronous visual-hull carving;
+- deterministic local silhouette-depth refinement;
+- source-photo vertex-color projection and WebGL2 material;
+- color-aware scene JSON round-trip;
+- Playground depth/color controls, progress diagnostics and cancellation.
+
 ## Next
 
 - strengthen GPU cache invalidation and context restoration;
@@ -42,8 +53,8 @@ documentation site.
 - add sampled textures and richer material state;
 - extend render sorting, culling and performance instrumentation;
 - implement a documented glTF subset;
-- add calibrated arbitrary-camera pose estimation and depth-aware surface refinement;
-- add optional texture projection, photogrammetry and neural reconstruction backends;
+- add bundled calibrated arbitrary-camera pose estimation models;
+- add UV texture-atlas projection, photogrammetry and neural reconstruction backends;
 - add retopology, watertight smoothing and export formats for reconstructed meshes;
 - add texture, lighting and material foundations before presenting high-detail imported models;
 - expand animation blending and eventually skeletal animation;

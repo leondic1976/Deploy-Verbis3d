@@ -15,6 +15,7 @@ flowchart LR
 meshes, applies material state, binds a program and VAO, uploads matrices/uniforms, and issues a
 triangle draw.
 
-The current alpha supports solid-color geometry only. Texture sampling, multiple passes, lights,
+The current alpha supports solid-color and normalized vertex-color geometry. Texture sampling,
+multiple passes, lights,
 shadows and advanced sorting are planned. Resource creation is tracked for deterministic renderer
 disposal.
