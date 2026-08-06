@@ -1,7 +1,7 @@
 import type { EngineCommand } from "../commands/index.js";
 import type { AICommandContext, AIProvider } from "./AIProvider.js";
 
-type CreationShape = "box" | "sphere" | "plane" | "car" | "face";
+type CreationShape = "box" | "sphere" | "plane" | "car" | "person" | "face" | "tree";
 
 interface CreationPlan {
   readonly shape: CreationShape;
@@ -14,6 +14,8 @@ const SHAPE_ALIASES: Readonly<Record<CreationShape, readonly string[]>> = {
   plane: ["평면", "바닥", "plane", "floor"],
   car: ["자동차", "차량", "승용차", "car", "vehicle"],
   face: ["사람 얼굴", "얼굴", "두상", "face", "head"],
+  person: ["사람", "인물", "캐릭터", "person", "human", "character"],
+  tree: ["나무", "수목", "tree"],
 };
 
 const COLOR_ALIASES: ReadonlyArray<
@@ -223,7 +225,9 @@ export class RuleBasedProvider implements AIProvider {
     if (!this.includes(input, ["만들", "생성", "추가", "create", "add", "spawn"])) return null;
     const shape = this.shape(input);
     if (!shape) {
-      throw new Error("Object creation requires a box, sphere, plane, car or face shape.");
+      throw new Error(
+        "Object creation requires a box, sphere, plane, car, person, face or tree shape.",
+      );
     }
     const count = this.creationCount(input);
     const explicitName = this.explicitName(input);

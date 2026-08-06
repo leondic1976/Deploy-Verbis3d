@@ -3,6 +3,7 @@ import { Object3D } from "../core/Object3D.js";
 import { Scene } from "../core/Scene.js";
 import { BoxGeometry, PlaneGeometry, SphereGeometry } from "../geometry/index.js";
 import { BasicMaterial } from "../materials/index.js";
+import { ProceduralModel } from "../models/index.js";
 import { Asset } from "./Asset.js";
 import { Loader } from "./Loader.js";
 
@@ -112,8 +113,16 @@ export class JSONSceneLoader extends Loader<Scene> {
     const color: [number, number, number, number] = this.numberArray(rawColor, 4)
       ? [rawColor[0]!, rawColor[1]!, rawColor[2]!, rawColor[3]!]
       : [1, 1, 1, 1];
-    const object = geometry ? new Mesh(geometry, new BasicMaterial({ color })) : new Object3D();
-    object.name = typeof value["name"] === "string" ? value["name"] : "";
+    const name = typeof value["name"] === "string" ? value["name"] : "";
+    const rawUserData = value["userData"];
+    const userData = this.isRecord(rawUserData) ? structuredClone(rawUserData) : {};
+    const template = userData["template"];
+    const object = geometry
+      ? new Mesh(geometry, new BasicMaterial({ color }))
+      : value["type"] === "ProceduralModel" && typeof template === "string"
+        ? new ProceduralModel(template, name)
+        : new Object3D();
+    object.name = name;
     const position = value["position"];
     if (this.numberArray(position, 3))
       object.position.set(position[0]!, position[1]!, position[2]!);
@@ -125,10 +134,11 @@ export class JSONSceneLoader extends Loader<Scene> {
     if (this.numberArray(scale, 3)) object.scale.set(scale[0]!, scale[1]!, scale[2]!);
     object.visible = typeof value["visible"] === "boolean" ? value["visible"] : true;
     object.enabled = typeof value["enabled"] === "boolean" ? value["enabled"] : true;
-    object.userData = this.isRecord(value["userData"]) ? structuredClone(value["userData"]) : {};
+    object.userData = userData;
     if (!Array.isArray(value["children"]))
       throw new Error("Scene object children must be an array.");
     for (const child of value["children"]) object.add(this.parseObject(child));
+    if (object instanceof ProceduralModel) object.refreshMetadata();
     return object;
   }
 

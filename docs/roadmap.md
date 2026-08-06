@@ -15,9 +15,9 @@ documentation site.
 - Korean/English natural-language object creation and chained operation recipes;
 - selection-aware offline/Ollama/compatible-provider command routing;
 - structured command preview and dry-run;
-- editable 22-part car and 18-part face hierarchies;
+- editable 22-part car, 21-part person, 18-part face and 7-part tree hierarchies;
 - move/rotate/stretch, car and face learning presets;
-- 18 filterable, typechecked learning sources;
+- 20 filterable, typechecked learning sources;
 - detailed Korean setup, modeling, Playground and provider guides.
 
 ## Next
@@ -28,7 +28,7 @@ documentation site.
 - add an optional server-side provider proxy and secret-management deployment guide;
 - connect `animateObject` directly to reusable AnimationClip construction;
 - add downloadable/importable scene files and larger scene persistence;
-- add more engine-native procedural geometry generators and mesh-editing utilities;
+- add more engine-native procedural templates, shared geometry/instancing and mesh-editing utilities;
 - add sampled textures and richer material state;
 - extend render sorting, culling and performance instrumentation;
 - implement a documented glTF subset;

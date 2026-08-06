@@ -55,13 +55,15 @@ storage and scene JSON. Production deployments should keep long-lived keys in a 
 - Viewport ray picking with a visible selected-object marker
 - Pointer drag orbit, Shift/middle/right drag pan, wheel/pinch zoom and reset
 - Scene hierarchy search, visibility and safe reparenting
-- Box, sphere, plane, non-rendering groups, a 22-part car and an 18-part face bust
+- Box, sphere, plane, non-rendering groups, a 22-part car, a 21-part person, an 18-part face bust
+  and a 7-part tree
 - Position, Euler rotation and scale editing
 - RGBA material opacity, side, depth-test and depth-write state
 - Spin, bob and orbit metadata with a timeline preview
 - Perspective/front/top camera views and selection framing
 - Background and field-of-view controls
-- Seven scene presets, including transform, car, face and 25-object draw-call exercises
+- Eight scene presets, including transform, four-model gallery, car, face and 25-object draw-call
+  exercises
 - Versioned JSON export/import
 
 ## Current boundaries

@@ -7,6 +7,7 @@ Verbis3D `0.1.0-alpha.1` is a directly implemented TypeScript/WebGL2 engine MVP.
 - [Architecture](architecture.md)
 - [Rendering pipeline](rendering-pipeline.md)
 - [Scene graph](scene-graph.md)
+- [Procedural model system](model-system.md)
 - [Math system](math-system.md)
 - [Animation](animation-system.md)
 - [AI command system](ai-command-system.md)
@@ -20,4 +21,5 @@ Verbis3D `0.1.0-alpha.1` is a directly implemented TypeScript/WebGL2 engine MVP.
 - [Roadmap](roadmap.md)
 - [Playground update audit](audit/playground-learning-update.md)
 - [Compound-model and Korean-docs audit](audit/compound-model-korean-docs-update.md)
+- [Object model core audit](audit/object-model-core-audit.md)
 - [API overview](api/README.md)

@@ -18,7 +18,7 @@ dependencies and source imports.
 
 The Chromium E2E suite checks navigation, WebGL2 initialization, draw readiness, responsive
 layout, all four Playground levels, undo/redo, structured command dry-runs, natural-language scene
-creation, procedural car/face editing, selected-object context, mocked Ollama transport, viewport
+creation, procedural car/person/face/tree editing, selected-object context, mocked Ollama transport, viewport
 picking, orbit/zoom, the Korean guide, example source viewer and console errors. It avoids pixel
 snapshots because virtual GPU output varies.
 

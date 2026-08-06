@@ -34,8 +34,8 @@
         <h2>Core concepts</h2>
         <a href="#math">Math</a><a href="#scene-graph">Scene graph</a><a href="#camera">Camera</a
         ><a href="#renderer">Renderer</a><a href="#geometry">Geometry</a
-        ><a href="#animation">Animation</a><a href="#commands">Commands & AI</a
-        ><a href="#playground">Progressive Playground</a
+        ><a href="#models">Object models</a><a href="#animation">Animation</a
+        ><a href="#commands">Commands & AI</a><a href="#playground">Progressive Playground</a
         ><a href="#plugins-assets">Plugins & assets</a><a href="#testing">Testing</a
         ><a href="./guide-ko.html" lang="ko">한국어 사용 가이드</a
         ><a href="./api/index.html">API reference</a>
@@ -110,6 +110,32 @@ engine.start();</code></pre>
             <code>BasicMaterial</code> uses GLSL ES 3.00 and a solid RGBA uniform.
           </p>
         </section>
+        <section id="models">
+          <h2>Procedural object models</h2>
+          <p>
+            <code>ModelFactory</code> is an application-owned template catalog. The built-in catalog
+            creates editable car, full-body person, face and tree hierarchies; custom templates use
+            the same validated primitive builder.
+          </p>
+          <pre><code>const models = createBuiltinModelFactory();
+const person = models.create("person", {
+  name: "guide",
+  colors: { shirt: [0.12, 0.58, 0.82, 1] }
+});
+person.getPart("left-upper-arm")?.rotateZ(-0.4);
+scene.add(person);</code></pre>
+          <p>
+            Stable part IDs, semantic color roles, independent cloning, command-bus creation and
+            JSON restoration are covered by the core API. These alpha assets are stylized
+            primitives, not production character meshes.
+          </p>
+          <div class="actions">
+            <a class="button" href="./playground.html?level=builder&amp;preset=model-gallery"
+              >Open model gallery</a
+            >
+            <a class="button secondary" href="./examples.html">View model source</a>
+          </div>
+        </section>
         <section id="animation">
           <h2>Animation</h2>
           <p>
@@ -132,8 +158,9 @@ await controller.execute("큐브를 오른쪽으로 2 이동");</code></pre>
   "빨간 구를 만들어 오른쪽으로 2 이동하고 천천히 회전시켜"
 );</code></pre>
           <p>
-            The offline grammar can create box, sphere, plane, car and face objects, then chain
-            movement, rotation, motion, scale, color, visibility, duplicate or delete operations.
+            The offline grammar can create box, sphere, plane, car, person, face and tree objects,
+            then chain movement, rotation, motion, scale, color, visibility, duplicate or delete
+            operations.
           </p>
         </section>
         <section id="playground">
@@ -146,7 +173,7 @@ await controller.execute("큐브를 오른쪽으로 2 이동");</code></pre>
           </p>
           <div class="actions">
             <a class="button" href="./playground.html">Open Scene Lab</a>
-            <a class="button secondary" href="./examples.html">Browse 18 source examples</a>
+            <a class="button secondary" href="./examples.html">Browse 20 source examples</a>
           </div>
         </section>
         <section id="plugins-assets">

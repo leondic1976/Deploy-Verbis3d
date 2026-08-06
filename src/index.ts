@@ -8,6 +8,6 @@ export * from "./geometry/index.js";
 export * from "./loaders/index.js";
 export * from "./materials/index.js";
 export * from "./math/index.js";
+export * from "./models/index.js";
 export * from "./plugins/index.js";
 export * from "./renderer/index.js";
-export * from "./utilities/index.js";

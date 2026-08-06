@@ -149,7 +149,19 @@ scene.add(car);
 const face = createProceduralFace({ name: "portrait" });
 face.position.set(2, -1.35, 0);
 scene.add(face);
-face.getObjectByName("portrait-mouth")?.scale.set(0.7, 0.14, 0.08);</code></pre>
+face.getPart("mouth")?.scale.set(0.7, 0.14, 0.08);
+
+const person = createProceduralPerson({
+  name: "guide",
+  shirtColor: [0.12, 0.58, 0.82, 1]
+});
+scene.add(person);
+person.getPart("left-upper-arm")?.rotateZ(-0.4);</code></pre>
+          <p>
+            자동차 22개, 전신 사람 21개, 얼굴 18개, 나무 7개 파트를 기본 모델로 제공합니다.
+            <code>getPart()</code>는 루트 이름과 무관한 안정적인 파트 ID를 사용하며,
+            <code>ModelFactory</code>에 애플리케이션 전용 모델 템플릿을 추가할 수 있습니다.
+          </p>
           <p>
             자동차는 22개, 얼굴은 18개 선택 가능한 부품을 갖습니다. 루트는 전체 모델을 변형하고,
             <code>{루트 이름}-{부품 역할}</code> 이름으로 창문·바퀴·눈·입 등을 따로 조회할 수
@@ -163,6 +175,11 @@ face.getObjectByName("portrait-mouth")?.scale.set(0.7, 0.14, 0.08);</code></pre>
               class="button secondary"
               href="./playground.html?level=advanced&amp;preset=face-study"
               >얼굴 편집</a
+            >
+            <a
+              class="button secondary"
+              href="./playground.html?level=builder&amp;preset=model-gallery"
+              >모델 갤러리</a
             >
           </div>
         </section>
@@ -195,7 +212,7 @@ await controller.execute(
           <p>
             자연어는 <code>EngineCommand[]</code> 데이터로 바뀐 뒤 schema, 대상, 범위, 권한 검사를
             통과해야 실행됩니다. <code>eval</code>이나 생성 JavaScript 실행은 없습니다. box, sphere,
-            plane, car, face 생성과 이동·회전·크기·색상·표시·복제 등을 지원합니다.
+            plane, car, person, face, tree 생성과 이동·회전·크기·색상·표시·복제 등을 지원합니다.
           </p>
         </section>
 

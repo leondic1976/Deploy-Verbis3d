@@ -88,12 +88,36 @@ const face = createProceduralFace({
 face.position.y = -1.35;
 scene.add(face);
 
-face.getObjectByName("portrait-mouth")?.scale.set(0.7, 0.14, 0.08);
-face.getObjectByName("portrait-left-eyebrow")?.rotateZ(-0.15);
+face.getPart("mouth")?.scale.set(0.7, 0.14, 0.08);
+face.getPart("left-eyebrow")?.rotateZ(-0.15);
 ```
 
 얼굴은 18개 부품으로 구성됩니다. 사진 수준 메시가 아니라, 계층·부품 선택·표정 변형을
 학습하는 스타일화된 절차적 예제입니다.
+
+## 전신 사람과 모델 라이브러리
+
+```ts
+import { createBuiltinModelFactory, createProceduralPerson } from "@verbis3d/core";
+
+const person = createProceduralPerson({
+  name: "guide",
+  skinColor: [0.72, 0.46, 0.31, 1],
+  shirtColor: [0.12, 0.58, 0.82, 1],
+});
+scene.add(person);
+
+person.getPart("left-upper-arm")?.rotateZ(-0.4);
+person.setRoleColor("primary", [0.9, 0.22, 0.14, 1]);
+
+const models = createBuiltinModelFactory();
+scene.add(models.create("tree", { name: "street-tree" }));
+```
+
+전신 사람은 21개 파트이며 자동차 22개, 얼굴 18개, 나무 7개 템플릿과 같은
+`ProceduralModel` API를 사용합니다. `getPart()`는 루트 이름에 의존하지 않는 파트 ID를
+사용합니다. 사용자 정의 템플릿은 `ModelFactory.register()`와 `createPrimitiveModel()`로
+등록할 수 있습니다.
 
 ## 임의 모양 만들기
 
