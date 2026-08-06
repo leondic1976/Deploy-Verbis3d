@@ -3,6 +3,31 @@
 배포 사이트의 Scene Lab은 실제 Verbis3D 공개 API로 동작하며 외부 서버 없이도 사용할 수
 있습니다.
 
+첫 화면 상단에서 두 작업 중 하나를 선택합니다.
+
+- **Scene editor**: 기존 객체 생성, 변형, 애니메이션, 자연어 명령 작업
+- **Photos → 3D**: 여러 사진을 인식하고 하나의 3D 메시로 만드는 단계별 작업
+
+## 여러 사진으로 3D 객체 만들기
+
+1. `Photos → 3D`를 선택합니다.
+2. 같은 객체를 촬영한 PNG, JPEG 또는 WebP 사진을 2장 이상 추가합니다.
+3. 각 사진을 촬영한 방향을 Front, Left side, Right side, Top 등으로 지정합니다.
+4. Vision provider를 선택합니다.
+   - Offline silhouette: 사진을 업로드하지 않는 브라우저 기준 구현
+   - Ollama vision: 로컬 멀티모달 모델
+   - OpenAI-compatible vision API: 설정한 호환 endpoint
+5. Surface detail을 선택하고 `Create 3D object`를 실행합니다.
+6. 인식 이름, 신뢰도, 생성 삼각형 수를 확인한 후 `Edit in scene`으로 편집을 계속합니다.
+
+최소한 정면과 측면처럼 서로 수직인 두 방향이 필요합니다. 배경이 단순하고 객체와 대비가
+클수록 오프라인 인식 결과가 좋아집니다. `Use demo views`는 미리 만든 3D 객체를 불러오는
+것이 아니라 브라우저에서 예제 사진을 만들고 실제 인식·메시 생성 파이프라인을 실행합니다.
+
+현재 결과는 사진 실루엣의 교집합을 사용하는 visual hull입니다. 보이지 않는 오목한 부분,
+사진 텍스처, NeRF, Gaussian splatting, 자동 리토폴로지는 포함하지 않습니다. 전문 인식·깊이·
+메시 AI는 `VisionAIProvider`로 교체할 수 있습니다.
+
 ## 10분 학습 순서
 
 1. Beginner에서 hierarchy의 `cube`를 선택합니다.
@@ -65,7 +90,9 @@ Builder의 Add object에는 Box, Sphere, Plane, Group과 Car, Face bust가 있�
 ## 저장, 되돌리기, 안전
 
 - Undo/Redo는 제한된 수의 장면 JSON snapshot을 사용합니다.
-- Export/Import는 버전이 있는 JSON 데이터만 처리합니다.
+- Export/Import는 버전이 있는 JSON 데이터와 검증된 사용자 BufferGeometry만 처리합니다.
 - API 키는 브라우저 storage나 장면 JSON에 저장하지 않습니다.
+- Offline silhouette은 사진을 외부로 전송하지 않습니다. 원격 Vision provider는 입력한
+  endpoint로 선택 사진을 전송하므로 해당 서비스의 보관 정책을 먼저 확인해야 합니다.
 - 생성된 텍스트나 JavaScript는 실행하지 않습니다.
 - 삭제와 범위 초과 명령은 Command Bus에서 차단됩니다.

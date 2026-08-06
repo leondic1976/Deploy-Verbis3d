@@ -1,6 +1,6 @@
 # Learning examples
 
-The Examples site exposes 20 complete TypeScript sources. `tsconfig.examples.json` checks them in
+The Examples site exposes 21 complete TypeScript sources. `tsconfig.examples.json` checks them in
 CI so the catalog cannot silently drift away from public exports.
 
 ## Suggested order
@@ -21,7 +21,8 @@ CI so the catalog cannot silently drift away from public exports.
 14. Scene JSON round-trip
 15. Asset cache and plugin lifecycle
 16. Natural-language creation and scene recipes
-17. Command safety and custom provider adapters
+17. Multi-photo 3D reconstruction
+18. Command safety and custom provider adapters
 
 Use the level and topic filters to narrow the catalog. The source viewer supports copying the
 complete file and links to the matching repository directory. Examples that have an interactive
@@ -30,3 +31,7 @@ recipe.
 
 The examples deliberately use only Verbis3D and browser APIs. They do not introduce a complete
 third-party 3D engine.
+
+`photo-to-3d` demonstrates the provider-neutral reconstruction pipeline. Pass any
+`VisionAIProvider` to the same function to use the offline baseline, Ollama, a compatible endpoint
+or an application-specific segmentation/mesh service.

@@ -45,6 +45,25 @@ flowchart LR
 Factories are application-owned rather than global. Built-in and custom models therefore share
 the normal scene graph while catalog contents and command exposure remain explicit.
 
+## Photo reconstruction flow
+
+```mermaid
+flowchart LR
+  A[2–12 Photos] --> B[Input and Resource Validation]
+  B --> C[VisionAIProvider]
+  C --> D[Recognition / Masks / Optional Depth]
+  D --> E[Schema Validation]
+  E --> F{Provider mesh available?}
+  F -->|Yes| G[Validate Triangle Mesh]
+  F -->|No| H[Visual Hull Reconstruction]
+  G --> I[Geometry + Material]
+  H --> I
+  I --> J[Mesh / Scene / WebGL2 Renderer]
+```
+
+The provider registry is application-owned and may contain offline, Ollama, compatible or
+domain-specific services. All routes converge on the same resource and data validation boundary.
+
 ## Frame loop
 
 ```mermaid
@@ -67,9 +86,9 @@ sequenceDiagram
 ## Package direction
 
 The alpha is a single package with folders as module boundaries. Imports generally point inward:
-math → core → cameras/geometry/materials → models/renderer, with commands/AI/assets/plugins consuming
-public object behavior. Type-only imports prevent lifecycle contracts from introducing runtime
-cycles.
+math → core → cameras/geometry/materials → models/reconstruction/renderer, with
+commands/AI/assets/plugins consuming public object behavior. Type-only imports prevent lifecycle
+contracts from introducing runtime cycles.
 
 ## Independent core boundary
 

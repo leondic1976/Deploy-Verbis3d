@@ -10,4 +10,7 @@ Primary entry points:
 - Content: Geometry, primitives, Material and BasicMaterial
 - Procedural content: `ProceduralModel`, isolated `ModelFactory` registries, custom templates and
   editable car/person/face/tree hierarchies
+- Reconstruction: `PhotoReconstructionPipeline`, `VisualHullReconstructor`, validated photo/mask
+  schemas and application-owned `VisionProviderRegistry`
+- Vision AI: offline, Mock, Ollama vision, OpenAI-compatible vision and custom mesh providers
 - Behavior: animation, commands, AI providers, loaders and plugins

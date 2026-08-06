@@ -249,11 +249,50 @@ test("compound models can be created, transformed, selected by part and built wi
   expect(errors).toEqual([]);
 });
 
+test("photo workflow guides users from demo views to validated 3D geometry", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  await page.goto("./playground.html?workflow=photos");
+  await expect(page.getByRole("heading", { name: "Create 3D from photos" })).toBeVisible();
+  await expect(page.locator("#reconstruct-photos")).toBeDisabled();
+  await page.getByRole("button", { name: "Use demo views" }).click();
+  await expect(page.locator(".photo-list-item")).toHaveCount(2);
+  await expect(page.locator("#photo-stat-count")).toHaveText("2");
+  await expect(page.locator("#reconstruct-photos")).toBeEnabled();
+  await page.getByRole("button", { name: "Create 3D object" }).click();
+  await expect(page.locator("#photo-result")).toHaveAttribute("data-state", "success");
+  await expect(page.locator("#photo-result")).toContainText("Created");
+  await expect(page.locator("#photo-stat-label")).toHaveText("person");
+  await expect(page.locator("#photo-stat-triangles")).not.toHaveText("—");
+  await expect(page.locator("#edit-reconstruction")).toBeEnabled();
+  await page.getByRole("button", { name: "Edit in scene" }).click();
+  await expect(page.locator("#selected-name")).toHaveText("person");
+  await expect(page.locator("#geometry-name")).toHaveText("BufferGeometry");
+  expect(errors).toEqual([]);
+});
+
+test("photo workflow exposes private local and replaceable remote vision providers", async ({
+  page,
+}) => {
+  await page.goto("./playground.html?workflow=photos");
+  await expect(page.locator("#vision-provider-help")).toContainText("entirely in this browser");
+  await page.locator("#vision-provider-mode").selectOption("ollama");
+  await expect(page.locator("#vision-provider-endpoint")).toHaveValue("http://127.0.0.1:11434");
+  await expect(page.locator("#vision-provider-model")).toHaveValue("qwen2.5vl:7b");
+  await page.locator("#vision-provider-mode").selectOption("compatible");
+  await page.locator("#vision-provider-api-key").fill("vision-tab-memory-only");
+  await expect(page.locator("#vision-provider-api-key")).toHaveAttribute("type", "password");
+  const stored = await page.evaluate(() => `${localStorage.length}:${sessionStorage.length}`);
+  expect(stored).toBe("0:0");
+});
+
 test("example library filters and exposes complete verified source", async ({ page }) => {
   await page.goto("./examples.html");
-  await expect(page.locator("#example-count")).toHaveText("20 of 20 examples");
+  await expect(page.locator("#example-count")).toHaveText("21 of 21 examples");
   await page.locator('[data-example-level="expert"]').click();
-  await expect(page.locator("#example-count")).toHaveText("4 of 20 examples");
+  await expect(page.locator("#example-count")).toHaveText("4 of 21 examples");
   await page.getByRole("button", { name: /Natural-language scene recipe/ }).click();
   await expect(page.locator("#source-code")).toContainText("const recipe");
   await expect(page.locator("#source-code")).toContainText("controller.execute");
@@ -323,4 +362,18 @@ test("playground remains usable without horizontal overflow on mobile", async ({
   await expect(page.locator('[data-add-model="car"]')).toBeVisible();
   await expect(page.locator('[data-add-model="person"]')).toBeVisible();
   await expect(page.locator('[data-add-model="tree"]')).toBeVisible();
+});
+
+test("photo reconstruction remains task-focused without mobile overflow", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./playground.html?workflow=photos");
+  await expect(page.getByRole("heading", { name: "Create 3D from photos" })).toBeVisible();
+  await expect(page.locator("#photo-drop-zone")).toBeVisible();
+  await page.getByRole("button", { name: "Use demo views" }).click();
+  await expect(page.locator(".photo-list-item")).toHaveCount(2);
+  const widthState = await page.evaluate(() => ({
+    viewport: window.innerWidth,
+    document: document.documentElement.scrollWidth,
+  }));
+  expect(widthState.document).toBeLessThanOrEqual(widthState.viewport);
 });

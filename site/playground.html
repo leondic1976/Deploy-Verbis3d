@@ -32,10 +32,25 @@
       </div>
     </header>
 
-    <div class="workspace-bar" aria-label="Playground controls">
+    <div
+      id="workspace-bar"
+      class="workspace-bar"
+      data-workflow="scene"
+      aria-label="Playground controls"
+    >
       <div class="workspace-title">
         <span class="workspace-mark" aria-hidden="true">V3</span>
         <span><strong>Scene Lab</strong><small>Local WebGL2 workspace</small></span>
+      </div>
+      <div class="workflow-switcher" role="group" aria-label="Playground workflow">
+        <button type="button" data-workflow-mode="scene" aria-pressed="true">
+          <span aria-hidden="true">◇</span
+          ><span><strong>Scene editor</strong><small>Build and animate</small></span>
+        </button>
+        <button type="button" data-workflow-mode="photos" aria-pressed="false">
+          <span aria-hidden="true">▧</span
+          ><span><strong>Photos → 3D</strong><small>Reconstruct an object</small></span>
+        </button>
       </div>
       <div class="level-switcher" role="group" aria-label="Workspace level">
         <button type="button" data-workspace-level="beginner" aria-pressed="true">
@@ -65,9 +80,132 @@
       </div>
     </div>
 
-    <main id="main" class="studio-workspace" data-level="beginner">
+    <main id="main" class="studio-workspace" data-level="beginner" data-workflow="scene">
       <aside class="studio-panel scene-panel" aria-label="Scene and learning tools">
-        <section class="level-guide" aria-labelledby="level-title">
+        <section
+          id="photo-workflow"
+          class="photo-workflow"
+          aria-labelledby="photo-workflow-title"
+          hidden
+        >
+          <p class="panel-kicker">Multi-view reconstruction</p>
+          <h1 id="photo-workflow-title">Create 3D from photos</h1>
+          <p class="photo-workflow-intro">
+            Add two or more views of one object. Assign the camera direction, then choose how the
+            object should be recognized.
+          </p>
+
+          <ol class="photo-steps" aria-label="Photo reconstruction steps">
+            <li data-photo-step="photos" aria-current="step"><span>1</span>Add photos</li>
+            <li data-photo-step="recognize"><span>2</span>Recognize</li>
+            <li data-photo-step="build"><span>3</span>Build 3D</li>
+          </ol>
+
+          <form id="photo-reconstruction-form" class="photo-reconstruction-form">
+            <fieldset class="photo-fieldset">
+              <legend><span>1</span>Capture views</legend>
+              <label id="photo-drop-zone" class="photo-drop-zone" for="photo-input">
+                <span class="drop-zone-icon" aria-hidden="true">＋</span>
+                <strong>Drop photos here</strong>
+                <small>or choose PNG, JPEG or WebP · up to 12 photos</small>
+                <input
+                  id="photo-input"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  multiple
+                />
+              </label>
+              <div class="photo-capture-actions">
+                <button id="choose-photos" class="secondary" type="button">Choose photos</button>
+                <button id="load-demo-photos" class="text-button" type="button">
+                  Use demo views
+                </button>
+              </div>
+              <ul id="photo-list" class="photo-list" aria-label="Source photographs"></ul>
+              <p id="photo-empty" class="photo-empty">
+                Best results: one front photo and one side photo on a plain background.
+              </p>
+            </fieldset>
+
+            <fieldset class="photo-fieldset">
+              <legend><span>2</span>Recognition</legend>
+              <label for="photo-object-hint">
+                Object name <small>optional</small>
+                <input
+                  id="photo-object-hint"
+                  placeholder="e.g. chair, car, person"
+                  autocomplete="off"
+                />
+              </label>
+              <label for="vision-provider-mode">
+                Vision provider
+                <select id="vision-provider-mode">
+                  <option value="offline">Offline silhouette · private</option>
+                  <option value="ollama">Ollama vision · local AI</option>
+                  <option value="compatible">OpenAI-compatible vision API</option>
+                </select>
+              </label>
+              <p id="vision-provider-help" class="provider-help">
+                Runs entirely in this browser. Use photos with a plain, contrasting background.
+              </p>
+              <div id="vision-remote-fields" class="vision-remote-fields" hidden>
+                <label for="vision-provider-endpoint"
+                  >Endpoint<input
+                    id="vision-provider-endpoint"
+                    type="url"
+                    placeholder="http://127.0.0.1:11434"
+                    spellcheck="false"
+                /></label>
+                <label for="vision-provider-model"
+                  >Vision model<input
+                    id="vision-provider-model"
+                    placeholder="qwen2.5vl:7b"
+                    spellcheck="false"
+                /></label>
+                <label id="vision-provider-key-field" for="vision-provider-api-key" hidden
+                  >API key<input
+                    id="vision-provider-api-key"
+                    type="password"
+                    autocomplete="off"
+                    placeholder="Kept in this tab only"
+                /></label>
+              </div>
+              <p class="photo-privacy-note">
+                <strong>Privacy:</strong> Offline mode never uploads images. Remote modes send the
+                selected photos to the endpoint you enter; keys are not stored.
+              </p>
+            </fieldset>
+
+            <fieldset class="photo-fieldset photo-quality-fields">
+              <legend><span>3</span>Build quality</legend>
+              <label for="reconstruction-resolution">
+                Surface detail
+                <select id="reconstruction-resolution">
+                  <option value="12">Draft · faster</option>
+                  <option value="20" selected>Balanced</option>
+                  <option value="28">Detailed · slower</option>
+                </select>
+              </label>
+              <label id="segmentation-threshold-field" for="segmentation-threshold">
+                Background separation <output id="segmentation-threshold-value">46</output>
+                <input id="segmentation-threshold" type="range" min="15" max="110" value="46" />
+              </label>
+            </fieldset>
+
+            <button id="reconstruct-photos" class="photo-primary-action" type="submit" disabled>
+              Create 3D object
+            </button>
+            <div class="photo-progress" aria-live="polite">
+              <progress id="photo-progress" max="100" value="0">0%</progress>
+              <output id="photo-progress-label">Add at least two perpendicular views.</output>
+            </div>
+            <p id="photo-result" class="result" role="status">
+              Your reconstructed object will appear in the 3D preview.
+            </p>
+          </form>
+        </section>
+
+        <section class="level-guide" data-scene-workflow aria-labelledby="level-title">
           <p class="panel-kicker">Learning level</p>
           <h1 id="level-title">Start with direct edits</h1>
           <p id="workspace-mode-desc">
@@ -91,7 +229,7 @@
           </ol>
         </section>
 
-        <section class="panel-section" aria-labelledby="outliner-title">
+        <section class="panel-section" data-scene-workflow aria-labelledby="outliner-title">
           <div class="panel-heading">
             <div>
               <p class="panel-kicker">Hierarchy</p>
@@ -111,6 +249,7 @@
 
         <section
           class="panel-section"
+          data-scene-workflow
           data-min-level="builder"
           aria-labelledby="create-title"
           hidden
@@ -158,6 +297,7 @@
 
         <section
           class="panel-section"
+          data-scene-workflow
           data-min-level="advanced"
           aria-labelledby="preset-title"
           hidden
@@ -225,6 +365,12 @@
           <canvas id="playground-canvas" aria-label="Interactive Verbis3D multi-object scene">
             Your browser does not support canvas.
           </canvas>
+          <div id="photo-preview-banner" class="photo-preview-banner" hidden>
+            <span><strong>3D preview</strong><small>Drag to orbit · wheel to zoom</small></span>
+            <button id="edit-reconstruction" class="secondary compact" type="button" disabled>
+              Edit in scene
+            </button>
+          </div>
           <div class="viewport-guides" id="viewport-guide-overlay" aria-hidden="true">
             <span class="axis-label axis-x">X</span>
             <span class="axis-label axis-y">Y</span>
@@ -484,7 +630,7 @@
       </section>
 
       <aside class="studio-panel inspector" aria-label="Object and scene inspector">
-        <div class="selection-heading">
+        <div class="selection-heading" data-scene-workflow>
           <div>
             <p class="panel-kicker">Selection</p>
             <h2 id="selected-name">cube</h2>
@@ -505,7 +651,12 @@
           </div>
         </div>
 
-        <div class="inspector-tabs" role="tablist" aria-label="Inspector sections">
+        <div
+          class="inspector-tabs"
+          data-scene-workflow
+          role="tablist"
+          aria-label="Inspector sections"
+        >
           <button
             id="object-tab"
             type="button"
@@ -542,7 +693,64 @@
           </button>
         </div>
 
-        <div id="object-panel" class="inspector-panel" role="tabpanel" aria-labelledby="object-tab">
+        <section
+          id="photo-summary"
+          class="photo-summary"
+          aria-labelledby="photo-summary-title"
+          hidden
+        >
+          <p class="panel-kicker">Reconstruction status</p>
+          <h2 id="photo-summary-title">Ready for source photos</h2>
+          <p id="photo-summary-description">
+            The library validates every image and AI response before allocating engine geometry.
+          </p>
+          <dl class="photo-result-stats">
+            <div>
+              <dt>Photos</dt>
+              <dd id="photo-stat-count">0</dd>
+            </div>
+            <div>
+              <dt>Provider</dt>
+              <dd id="photo-stat-provider">Offline</dd>
+            </div>
+            <div>
+              <dt>Object</dt>
+              <dd id="photo-stat-label">—</dd>
+            </div>
+            <div>
+              <dt>Confidence</dt>
+              <dd id="photo-stat-confidence">—</dd>
+            </div>
+            <div>
+              <dt>Method</dt>
+              <dd id="photo-stat-method">Visual hull</dd>
+            </div>
+            <div>
+              <dt>Triangles</dt>
+              <dd id="photo-stat-triangles">—</dd>
+            </div>
+          </dl>
+          <div class="capture-guidance">
+            <h3>For a cleaner model</h3>
+            <ul>
+              <li>Keep the whole object inside every frame.</li>
+              <li>Use front and side views at the same height.</li>
+              <li>Avoid moving parts, reflections and hard shadows.</li>
+            </ul>
+          </div>
+          <p class="photo-limit-note">
+            This alpha creates a geometric visual hull, not a photorealistic NeRF or production
+            character mesh. Specialized AI can plug into the same provider interface.
+          </p>
+        </section>
+
+        <div
+          id="object-panel"
+          class="inspector-panel"
+          data-scene-workflow
+          role="tabpanel"
+          aria-labelledby="object-tab"
+        >
           <fieldset class="property-group">
             <legend>Identity</legend>
             <label for="object-name"
@@ -653,6 +861,7 @@
         <div
           id="motion-panel"
           class="inspector-panel"
+          data-scene-workflow
           role="tabpanel"
           aria-labelledby="motion-tab"
           hidden
@@ -693,6 +902,7 @@
         <div
           id="scene-panel"
           class="inspector-panel"
+          data-scene-workflow
           role="tabpanel"
           aria-labelledby="scene-tab"
           hidden

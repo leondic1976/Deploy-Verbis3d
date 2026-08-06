@@ -2,8 +2,19 @@
 
 ## Unreleased
 
+## 0.2.0-alpha.1 - 2026-08-06
+
 ### Added
 
+- Provider-neutral multi-photo reconstruction core with validated photo, mask and mesh schemas
+- Offline foreground segmentation and cardinal-view visual-hull mesh generation
+- `VisionAIProvider`, `VisionProviderRegistry`, Mock, Ollama vision and OpenAI-compatible vision
+  adapters, plus optional direct AI mesh generation
+- Safe buffer-geometry JSON round-trip for reconstructed meshes
+- A task-oriented Playground switch between scene editing and a three-step Photos → 3D workflow
+- Drag/drop image input, camera-direction assignment, private/offline mode, replaceable AI settings,
+  progress, error and result states
+- Multi-photo reconstruction example, tests and capture/provider documentation
 - Application-owned `ModelFactory`, validated `ModelTemplate` contract and `ProceduralModel` part
   APIs
 - Built-in 21-part person and 7-part tree alongside migrated car and face templates
@@ -15,7 +26,7 @@
 - Viewport object picking, selection marker, orbit/pan/zoom, camera presets and framing
 - Playground provider settings for offline rules, Ollama and OpenAI-compatible endpoints
 - Selection-aware provider context without persistent browser credential storage
-- Twenty filterable and CI-typechecked learning examples with complete source viewing
+- Twenty-one filterable and CI-typechecked learning examples with complete source viewing
 - Engine-native 22-part car and 18-part face factories with individually editable children
 - Move/rotate/stretch, procedural car and procedural face Playground presets
 - Detailed Korean setup, modeling, Playground and natural-language/provider documentation

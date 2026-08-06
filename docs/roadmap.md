@@ -17,8 +17,18 @@ documentation site.
 - structured command preview and dry-run;
 - editable 22-part car, 21-part person, 18-part face and 7-part tree hierarchies;
 - move/rotate/stretch, car and face learning presets;
-- 20 filterable, typechecked learning sources;
+- 21 filterable, typechecked learning sources;
 - detailed Korean setup, modeling, Playground and provider guides.
+
+## 0.2.0-alpha.1 photo reconstruction
+
+- validated 2–12 photo input and cardinal camera directions;
+- private offline foreground segmentation;
+- visual-hull indexed `Geometry` generation;
+- Mock, Ollama vision and OpenAI-compatible vision adapters;
+- custom segmentation, depth, pose and direct-mesh provider capability boundary;
+- guided desktop/mobile Photos → 3D Playground workflow;
+- validated reconstructed buffer-geometry scene JSON round-trip.
 
 ## Next
 
@@ -32,6 +42,9 @@ documentation site.
 - add sampled textures and richer material state;
 - extend render sorting, culling and performance instrumentation;
 - implement a documented glTF subset;
+- add calibrated arbitrary-camera pose estimation and depth-aware surface refinement;
+- add optional texture projection, photogrammetry and neural reconstruction backends;
+- add retopology, watertight smoothing and export formats for reconstructed meshes;
 - add texture, lighting and material foundations before presenting high-detail imported models;
 - expand animation blending and eventually skeletal animation;
 - introduce WebGPU only after renderer contracts prove stable.

@@ -38,13 +38,13 @@
         ><a href="#first-scene">첫 장면</a>
         <h2>장면 만들기</h2>
         <a href="#transform">객체 변형</a><a href="#compound">자동차와 얼굴</a
-        ><a href="#custom-geometry">임의 도형</a>
+        ><a href="#custom-geometry">임의 도형</a><a href="#photo-3d">사진으로 3D 만들기</a>
         <h2>자연어</h2>
         <a href="#natural-language">오프라인 명령</a><a href="#providers">Ollama와 API</a
         ><a href="#playground-ko">Playground 실습</a><a href="#troubleshooting">문제 해결</a>
       </aside>
       <article class="docs-content">
-        <p class="eyebrow">한국어 문서 · 0.1 alpha</p>
+        <p class="eyebrow">한국어 문서 · 0.2 alpha</p>
         <h1>Verbis3D를 처음부터 사용해 보세요.</h1>
         <p class="lead">
           설치, WebGL2 장면, 객체 변형, 편집 가능한 자동차·얼굴, 안전한 자연어 명령을 실제 코드
@@ -73,7 +73,7 @@ npm run typecheck
 npm run test
 npm run site:dev</code></pre>
           <p>
-            현재 버전은 <code>0.1.0-alpha.1</code> 소스 릴리스입니다. npm 게시 전이므로 다른
+            현재 버전은 <code>0.2.0-alpha.1</code> 소스 릴리스입니다. npm 게시 전이므로 다른
             프로젝트에서 시험하려면 <code>npm run build &amp;&amp; npm pack</code>으로 로컬 패키지를
             만듭니다.
           </p>
@@ -198,6 +198,30 @@ person.getPart("left-upper-arm")?.rotateZ(-0.4);</code></pre>
   .setIndex([0, 1, 2]);
 geometry.computeBoundingBox();
 geometry.computeBoundingSphere();</code></pre>
+        </section>
+
+        <section id="photo-3d">
+          <h2>여러 사진으로 3D 객체 만들기</h2>
+          <p>
+            Playground 상단의 <strong>Photos → 3D</strong>를 선택하고 같은 객체의 정면·측면 사진을
+            추가합니다. 각 사진의 촬영 방향을 지정한 후 오프라인, Ollama vision 또는 호환 Vision
+            API를 선택할 수 있습니다.
+          </p>
+          <ol>
+            <li>객체 전체가 보이고 배경과 대비되는 사진을 2장 이상 준비합니다.</li>
+            <li>Front와 Left side처럼 서로 수직인 방향을 지정합니다.</li>
+            <li>개인정보가 중요하면 사진을 전송하지 않는 Offline silhouette을 사용합니다.</li>
+            <li>Create 3D object를 실행하고 신뢰도와 삼각형 수를 확인합니다.</li>
+            <li>Edit in scene으로 이동해 위치·회전·재질을 계속 편집합니다.</li>
+          </ol>
+          <div class="callout">
+            현재 기준 구현은 실루엣 교집합으로 만드는 visual hull입니다. 사진 텍스처, 보이지 않는
+            오목한 부분, NeRF와 자동 리토폴로지는 아직 포함하지 않습니다. 전문 AI는
+            <code>VisionAIProvider</code>로 연결할 수 있습니다.
+          </div>
+          <div class="actions">
+            <a class="button" href="./playground.html?workflow=photos">사진 3D 실습 열기</a>
+          </div>
         </section>
 
         <section id="natural-language">
